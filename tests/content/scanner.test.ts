@@ -56,4 +56,17 @@ describe('scanner', () => {
     document.body.innerHTML = '<p id="p">Read <a id="a" href="#">the docs</a></p>';
     expect(readUnit(byId('p'))?.anchor).toBe(byId('a'));
   });
+
+  it('行内 <code> 的文字保留在段落里；pre > code 仍跳过', () => {
+    document.body.innerHTML = '<p id="p">Use <code>x</code> now</p><pre><code>a</code></pre>';
+    expect(ids(findBlocks(document.body))).toEqual(['p']);
+    expect(readUnit(byId('p'))?.text).toBe('Use x now');
+  });
+
+  it('kbd/var/samp/del/ins/wbr 视为行内元素', () => {
+    document.body.innerHTML =
+      '<p id="p">Press <kbd>Ctrl</kbd> and <var>n</var>, <samp>ok</samp>, <del>old</del>, <ins>new</ins>, long<wbr>word</p>';
+    expect(ids(findBlocks(document.body))).toEqual(['p']);
+    expect(readUnit(byId('p'))?.text).toBe('Press Ctrl and n, ok, old, new, longword');
+  });
 });

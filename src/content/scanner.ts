@@ -10,11 +10,12 @@ export interface Unit {
 
 const INLINE_TAGS = new Set([
   'A', 'B', 'STRONG', 'I', 'EM', 'SPAN', 'CODE', 'SMALL', 'SUP', 'SUB', 'MARK', 'ABBR',
-  'TIME', 'LABEL', 'U', 'S', 'BR', 'IMG', 'FONT', 'CITE', 'Q',
+  'TIME', 'LABEL', 'U', 'S', 'BR', 'IMG', 'FONT', 'CITE', 'Q', 'KBD', 'VAR', 'SAMP', 'DEL', 'INS', 'WBR',
 ]);
 
+/** 行内 <code> 属于段落正文，不跳过；代码块由 'pre' 跳过（含 pre > code） */
 const SKIP_SELECTOR = [
-  'pre', 'code', 'script', 'style', 'noscript', 'textarea', 'input', 'select', 'svg', 'math',
+  'pre', 'script', 'style', 'noscript', 'textarea', 'input', 'select', 'svg', 'math',
   '[contenteditable=""]', '[contenteditable="true"]', '[translate="no"]', '.notranslate', TR_TAG,
 ].join(',');
 
