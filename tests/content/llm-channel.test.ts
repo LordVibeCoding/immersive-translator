@@ -77,4 +77,36 @@ describe('createLlmChannel', () => {
     expect(connect).toHaveBeenCalledTimes(2);
     expect(port2.posted).toEqual([req('T2')]);
   });
+
+  it('postMessage 抛错（如扩展已重载）时不外抛，并在下次 send 重新连接', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const broken = fakePort();
+    broken.postMessage = () => {
+      throw new Error('Extension context invalidated.');
+    };
+    const port2 = fakePort();
+    connect
+      .mockReturnValueOnce(broken as unknown as ReturnType<typeof browser.runtime.connect>)
+      .mockReturnValueOnce(port2 as unknown as ReturnType<typeof browser.runtime.connect>);
+    const channel = createLlmChannel(() => {});
+
+    expect(() => channel.send(req('T1'))).not.toThrow();
+    channel.send(req('T2'));
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[沉浸翻译]'), expect.any(Error));
+    expect(connect).toHaveBeenCalledTimes(2);
+    expect(port2.posted).toEqual([req('T2')]);
+    warn.mockRestore();
+  });
+
+  it('connect 抛错时不外抛', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    connect.mockImplementationOnce(() => {
+      throw new Error('Extension context invalidated.');
+    });
+    const channel = createLlmChannel(() => {});
+    expect(() => channel.send(req('T'))).not.toThrow();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });

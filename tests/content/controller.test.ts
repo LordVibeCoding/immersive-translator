@@ -179,4 +179,16 @@ describe('Controller', () => {
     expect(requests).toHaveLength(2);
     expect((controller as unknown as { units: Map<string, unknown> }).units.size).toBe(1);
   });
+
+  it('发送给大模型抛错时，本批本地翻译仍会执行', async () => {
+    const { controller } = setup({
+      sendToLlm: () => {
+        throw new Error('Extension context invalidated.');
+      },
+    });
+    controller.enable();
+    await flush().catch(() => {});
+    await Promise.resolve();
+    expect(trText('p1')).toBe('本地:Hello world');
+  });
 });

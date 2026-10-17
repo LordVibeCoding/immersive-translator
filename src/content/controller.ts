@@ -105,10 +105,11 @@ export class Controller {
     this.pending.clear();
     const items = blocks.flatMap((block) => this.prepare(block) ?? []);
     if (items.length === 0) return;
+    // 先本地后大模型：发送抛错时不连带跳过本批本地初稿
+    this.translateLocally(items);
     if (this.deps.llmEnabled) {
       this.deps.sendToLlm({ type: 'translate', pageTitle: this.deps.doc.title, items });
     }
-    this.translateLocally(items);
   }
 
   /** 原文未变且已渲染或正在翻译时跳过；否则清掉旧译文并登记新任务 */

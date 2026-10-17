@@ -20,9 +20,16 @@ export function createLlmChannel(onResult: (result: TranslateResult) => void) {
   };
 
   return {
+    /** 扩展重载后（Extension context invalidated）或端口刚断开时 connect/postMessage 会同步抛错，
+     *  此时丢弃端口，下次发送重连；本批不重发（保留本地初稿） */
     send(request: TranslateRequest): void {
-      port ??= connect();
-      port.postMessage(request);
+      try {
+        port ??= connect();
+        port.postMessage(request);
+      } catch (err) {
+        port = null;
+        console.warn('[沉浸翻译] 发送大模型请求失败', err);
+      }
     },
   };
 }
