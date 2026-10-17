@@ -50,4 +50,18 @@ describe('streamTranslate', () => {
     const fetchFn = vi.fn(async () => new Response('invalid key', { status: 401 }));
     await expect(streamTranslate(config, 'T', ['Hi'], () => {}, fetchFn)).rejects.toThrow('HTTP 401: invalid key');
   });
+
+  it('请求带超时信号', async () => {
+    const fetchFn = vi.fn(async () => sseResponse(['[1] 你好']));
+    await streamTranslate(config, 'T', ['Hello'], () => {}, fetchFn);
+    const [, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('超时抛出中文错误', async () => {
+    const fetchFn = vi.fn(async () => {
+      throw new DOMException('signal timed out', 'TimeoutError');
+    });
+    await expect(streamTranslate(config, 'T', ['Hi'], () => {}, fetchFn)).rejects.toThrow('大模型请求超时');
+  });
 });

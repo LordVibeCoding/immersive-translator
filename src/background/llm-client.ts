@@ -1,5 +1,5 @@
 import type { LlmConfig } from '../shared/settings';
-import { LLM_ERROR_DETAIL_MAX } from '../shared/constants';
+import { LLM_ERROR_DETAIL_MAX, LLM_TIMEOUT_MS } from '../shared/constants';
 import { createItemParser, createSseDecoder } from './stream-parser';
 
 export interface ChatMessage {
@@ -30,7 +30,12 @@ export function chatEndpoint(baseURL: string): string {
   return `${baseURL.replace(/\/+$/, '')}/chat/completions`;
 }
 
-/** 流式翻译一批段落，每完成一段回调 (0 起始下标, 译文) */
+/** 超时信号触发时 fetch 或流读取抛出的错误（AbortSignal.timeout 为 TimeoutError） */
+function isTimeout(err: unknown): boolean {
+  return err instanceof DOMException && (err.name === 'TimeoutError' || err.name === 'AbortError');
+}
+
+/** 流式翻译一批段落，每完成一段回调 (0 起始下标, 译文)；超时抛出中文错误 */
 export async function streamTranslate(
   config: LlmConfig,
   pageTitle: string,
@@ -38,8 +43,24 @@ export async function streamTranslate(
   onItem: (index: number, text: string) => void,
   fetchFn: FetchFn = (input, init) => fetch(input, init),
 ): Promise<void> {
+  try {
+    await requestAndStream(config, pageTitle, texts, onItem, fetchFn);
+  } catch (err) {
+    if (isTimeout(err)) throw new Error(`大模型请求超时（${LLM_TIMEOUT_MS / 1000} 秒）`);
+    throw err;
+  }
+}
+
+async function requestAndStream(
+  config: LlmConfig,
+  pageTitle: string,
+  texts: readonly string[],
+  onItem: (index: number, text: string) => void,
+  fetchFn: FetchFn,
+): Promise<void> {
   const res = await fetchFn(chatEndpoint(config.baseURL), {
     method: 'POST',
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.apiKey}` },
     body: JSON.stringify({
       model: config.model,

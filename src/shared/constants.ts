@@ -22,6 +22,8 @@ export const BATCH_WAIT_MS = 150;
 export const MAX_CONCURRENT_REQUESTS = 3;
 /** 大模型错误响应正文在错误信息中保留的最大字符数 */
 export const LLM_ERROR_DETAIL_MAX = 200;
+/** 单次大模型请求（含流式读取全过程）的超时时间，超时后释放并发名额，已完成的段落不受影响 */
+export const LLM_TIMEOUT_MS = 30_000;
 
 /** 通信、存储与 DOM 标记 */
 export const PORT_NAME = 'translate';
