@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>沉浸翻译 - 设置</title>
+    <meta name="manifest.open_in_tab" content="true" />
+    <style>
+      body { max-width: 560px; margin: 40px auto; padding: 0 16px; font: 14px/1.6 -apple-system, BlinkMacSystemFont, sans-serif; color: #222; }
+      label { display: block; margin: 14px 0 4px; font-weight: 500; }
+      input[type='text'], input[type='password'] { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+      .hint { margin: 2px 0 0; font-size: 12px; color: #888; }
+      .row { margin-top: 20px; display: flex; gap: 8px; }
+      button { padding: 8px 16px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
+      button[type='submit'] { background: #222; color: #fff; border-color: #222; }
+      #status { margin-top: 16px; white-space: pre-wrap; }
+      .ok { color: #1e7e34; }
+      .warn { color: #c0392b; }
+    </style>
+  </head>
+  <body>
+    <h1>沉浸翻译 - 设置</h1>
+    <form id="form">
+      <h2>大模型精翻（OpenAI 兼容接口，三项全部留空则只用本地翻译）</h2>
+      <label for="baseURL">接口地址</label>
+      <input id="baseURL" type="text" placeholder="https://api.deepseek.com/v1" />
+      <p class="hint">填到 /v1 为止，插件会自动拼上 /chat/completions</p>
+      <label for="apiKey">API Key</label>
+      <input id="apiKey" type="password" autocomplete="off" />
+      <label for="model">模型</label>
+      <input id="model" type="text" placeholder="deepseek-chat" />
+      <p class="hint">优先选速度快的小模型，精翻体验更好</p>
+      <h2>通用</h2>
+      <label><input id="autoTranslate" type="checkbox" /> 打开英文网页时自动翻译</label>
+      <div class="row">
+        <button type="submit">保存</button>
+        <button id="test" type="button">测试连接</button>
+      </div>
+    </form>
+    <p id="status"></p>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

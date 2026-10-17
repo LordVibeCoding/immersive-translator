@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>沉浸翻译</title>
+    <meta name="manifest.type" content="browser_action" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <p id="host" class="muted"></p>
+      <p id="unsupported" class="warn" hidden>此页面无法翻译（浏览器内部页面，或页面还没加载完）</p>
+      <section id="controls">
+        <button id="toggle" type="button"></button>
+        <button id="mode" type="button"></button>
+        <label><input id="never" type="checkbox" /> 本站不自动翻译</label>
+      </section>
+      <h2>本地翻译</h2>
+      <p id="local-status"></p>
+      <button id="download" type="button" hidden>下载本地翻译模型</button>
+      <h2>大模型精翻</h2>
+      <p id="llm-status"></p>
+      <p id="error" class="warn" hidden></p>
+      <footer><a id="options" href="#">设置</a> · Alt+A 开关 · Alt+S 切换模式</footer>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
