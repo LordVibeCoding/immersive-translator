@@ -135,4 +135,48 @@ describe('Controller', () => {
     await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
     expect(trText('p3')).toBeNull();
   });
+
+  it('未配置大模型时，本地翻译失败不会永久卡死；disable/enable 后可重试', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let call = 0;
+    const { controller } = setup({
+      llmEnabled: false,
+      local: {
+        translate: async (t) => {
+          call++;
+          if (call === 1) throw new Error('local fail');
+          return `本地:${t}`;
+        },
+      },
+    });
+    controller.enable();
+    await flush();
+    controller.disable();
+    controller.enable();
+    await flush();
+    expect(trText('p1')).toBe('本地:Hello world');
+    warn.mockRestore();
+  });
+
+  it('译文节点被外部删除后会重新渲染', async () => {
+    const { controller, requests } = setup();
+    controller.enable();
+    await flush();
+    controller.handleResult(requests[0]!.items[0]!.id, '你好世界');
+    byId('p1').querySelector('it-tr')!.remove();
+    await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
+    expect(trText('p1')).toBe('本地:Hello world');
+  });
+
+  it('请求进行中原文发生变化后，旧任务条目会被释放', async () => {
+    const { controller, requests } = setup({
+      local: { translate: () => new Promise<string>(() => {}) },
+    });
+    controller.enable();
+    await flush();
+    byId('p1').firstChild!.textContent = 'Changed text';
+    await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
+    expect(requests).toHaveLength(2);
+    expect((controller as unknown as { units: Map<string, unknown> }).units.size).toBe(1);
+  });
 });

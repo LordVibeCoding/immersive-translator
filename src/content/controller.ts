@@ -32,6 +32,7 @@ export class Controller {
   private readonly units = new Map<string, Unit>();
   private readonly sources = new WeakMap<Element, string>();
   private readonly inFlight = new WeakSet<Element>();
+  private readonly blockIds = new WeakMap<Element, string>();
   private readonly pending = new Set<Element>();
   private readonly mutationRoots = new Set<Element>();
   private flushTimer: ReturnType<typeof setTimeout> | undefined;
@@ -119,9 +120,19 @@ export class Controller {
     clearTranslation(block);
     this.sources.set(block, unit.text);
     this.inFlight.add(block);
+    const oldId = this.blockIds.get(block);
+    if (oldId) this.units.delete(oldId);
     const id = String(this.nextId++);
     this.units.set(id, unit);
+    this.blockIds.set(block, id);
     return { id, text: unit.text };
+  }
+
+  /** 释放一个永远不会到达 final 的任务条目（仅在没有大模型精翻兜底时调用） */
+  private abandon(id: string): void {
+    const unit = this.units.get(id);
+    this.units.delete(id);
+    if (unit) this.inFlight.delete(unit.block);
   }
 
   private translateLocally(items: readonly TranslateItem[]): void {
@@ -131,7 +142,10 @@ export class Controller {
     for (const item of items) {
       local.translate(item.text).then(
         (text) => this.render(item.id, text, level),
-        (err: unknown) => console.warn('[沉浸翻译] 本地翻译失败', err),
+        (err: unknown) => {
+          console.warn('[沉浸翻译] 本地翻译失败', err);
+          if (!llmEnabled) this.abandon(item.id);
+        },
       );
     }
   }
