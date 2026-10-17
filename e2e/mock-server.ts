@@ -7,10 +7,17 @@ export interface MockServer {
   readonly close: () => Promise<void>;
 }
 
-const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Test Page</title></head><body>
+/**
+ * #p1 上的网站样式模拟 `.x > * { display:block }` 之类规则，用于验证关闭翻译时译文仍被隐藏；
+ * #mix 是混合块（裸文本 + 子段落），子段落被高占位推到视口（含提前量）之外，
+ * 用于验证只看译文模式下子段落不被隐藏、滚动到后仍会被翻译。
+ */
+const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Test Page</title>
+<style>#p1 > * { display: block; }</style></head><body>
 <p id="p1">The quick brown fox jumps over the lazy dog.</p>
 <p id="p2">Hello <a href="#">world</a>, this is a <b>test</b>.</p>
 <pre id="code">const x = 1;</pre>
+<div id="mix">Lead text <div style="height: 3000px"></div><p id="mixp">Child paragraph text.</p></div>
 </body></html>`;
 
 /** 把 user 消息里的「[n] 原文」变成「[n] 译:原文」 */

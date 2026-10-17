@@ -84,9 +84,12 @@ options 大模型配置（baseURL/apiKey/model）+ 测试连接、全局自动�
 - 译文以自定义元素 `<it-tr>` 追加为段落块的**最后一个子节点**（`display:block`），不改动原有 DOM 结构（避免与 React 等框架冲突）。
 - 记录每块的质量等级，只升不降；`draft` 加 `it-draft` 类（`opacity: .6`）。
 - 模式由 `<html>` 上的类控制，切换瞬间完成、不重复翻译：
-  - 关闭：`html:not(.it-on) it-tr { display:none }`
-  - 双语：`.it-on.it-dual` 默认显示
-  - 只看译文：段落块 `font-size:0` 隐藏裸文本，`> :not(it-tr)` 隐藏子元素；`<it-tr>` 用创建时记录的计算字号恢复。
+  - 关闭：`html:not(.it-on) it-tr { display:none !important }`
+  - 双语：`html.it-on it-tr { display:block !important }`（显隐规则用 `!important`，防止网站 `.x > * {display:block}` 之类规则干扰）
+  - 只看译文：只隐藏属于本段原文的部分——段落块 `font-size:0` 隐藏裸文本，隐藏**行内**子元素（标签集合与 scanner 共用）；
+    非行内子元素（嵌套块、`pre`、`table` 等）是独立段落或非正文，保持显示并用 `--it-fs` 恢复字号，
+    保证混合块（如 `<div>裸文本<p>子段落</p></div>`）里尚未翻译的子段落仍能进入视口被翻译。
+    `<it-tr>` 用创建时记录的计算字号 `--it-fs` 恢复；若记录时段落继承到 0 字号，改用最近已翻译祖先记录的 `--it-fs`。
 - 译文元素设置 `white-space: normal`；父元素的行数截断（line-clamp）不做特殊处理。
 
 ### 4.5 controller（编排）

@@ -70,4 +70,17 @@ describe('renderer', () => {
     injectStyles(document);
     expect(document.querySelectorAll('#it-styles')).toHaveLength(1);
   });
+
+  it('段落继承到 0 字号时，--it-fs 改用最近已翻译祖先记录的字号', () => {
+    document.body.innerHTML =
+      '<div id="outer" style="--it-fs: 18px; font-size: 0px">Lead <span><p id="inner">Child text</p></span></div>';
+    renderTranslation(readUnit(byId('inner'))!, '子段落', 'final');
+    expect(byId('inner').style.getPropertyValue('--it-fs')).toBe('18px');
+  });
+
+  it('字号正常时 --it-fs 记录段落自身的计算字号', () => {
+    document.body.innerHTML = '<p id="p" style="font-size: 20px">Hello world</p>';
+    renderTranslation(readUnit(byId('p'))!, '你好', 'final');
+    expect(byId('p').style.getPropertyValue('--it-fs')).toBe('20px');
+  });
 });

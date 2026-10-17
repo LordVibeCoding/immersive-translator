@@ -8,7 +8,8 @@ export interface Unit {
   readonly anchor: Node;
 }
 
-const INLINE_TAGS = new Set([
+/** 行内标签（大写 tagName）；renderer 用它生成「只看译文」模式的隐藏选择器，保持两处一致 */
+export const INLINE_TAGS: ReadonlySet<string> = new Set([
   'A', 'B', 'STRONG', 'I', 'EM', 'SPAN', 'CODE', 'SMALL', 'SUP', 'SUB', 'MARK', 'ABBR',
   'TIME', 'LABEL', 'U', 'S', 'BR', 'IMG', 'FONT', 'CITE', 'Q', 'KBD', 'VAR', 'SAMP', 'DEL', 'INS', 'WBR',
 ]);

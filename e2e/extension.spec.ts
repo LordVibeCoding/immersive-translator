@@ -76,6 +76,24 @@ test('开关翻译、切换只看译文', async ({ context, sw, server }) => {
   await expect(page.locator('#p2 > it-tr')).toBeVisible();
 });
 
+test('只看译文：混合块的子段落保持可见并在滚动到后被翻译', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await expect(page.locator('#mix > it-tr')).toHaveText('译:Lead text');
+  await expect(page.locator('#mixp > it-tr')).toHaveCount(0);
+
+  await sendCommand(sw, server.url, 'toggle-mode');
+  await expect(page.locator('html')).toHaveClass(/it-only/);
+  await expect(page.locator('#mix')).toHaveCSS('font-size', '0px');
+  await expect(page.locator('#mix > it-tr')).toBeVisible();
+  await expect(page.locator('#mixp')).toBeVisible();
+
+  await page.locator('#mixp').scrollIntoViewIfNeeded();
+  await expect(page.locator('#mixp > it-tr')).toHaveText('译:Child paragraph text.');
+  await expect(page.locator('#mixp > it-tr')).toHaveCSS('font-size', '16px');
+});
+
 test('动态插入的段落也会被翻译', async ({ context, sw, server }) => {
   await configure(sw, server);
   const page = await context.newPage();
@@ -85,7 +103,7 @@ test('动态插入的段落也会被翻译', async ({ context, sw, server }) => 
     const p = document.createElement('p');
     p.id = 'p3';
     p.textContent = 'Dynamically added paragraph.';
-    document.body.append(p);
+    document.body.prepend(p); // 插到顶部，保证在视口内（页面底部有高占位）
   });
   await expect(page.locator('#p3 > it-tr')).toHaveText('译:Dynamically added paragraph.');
 });
