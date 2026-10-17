@@ -23,9 +23,9 @@
 
 ## 开发
 
-- `pnpm dev`：开发模式（自动打开带插件的浏览器，热更新）
+- `pnpm dev`：WXT 开发模式，构建到 `.output/chrome-mv3-dev` 并监听文件变更自动重新构建。正版 Chrome 不支持命令行加载扩展，需在 `chrome://extensions` 手动「加载已解压的扩展程序」选择 `.output/chrome-mv3-dev`（与 `pnpm build` 产出的 `.output/chrome-mv3` 是不同目录）
 - `pnpm test` / `pnpm test:coverage`：单元与集成测试
-- `pnpm test:e2e`：端到端测试（模拟大模型）
+- `pnpm test:e2e`：端到端测试（构建后用 Playwright 自带的 Chromium 加载插件，模拟大模型）；首次运行前需执行 `pnpm exec playwright install chromium`
 
 ## 本地翻译的验证结论
 
