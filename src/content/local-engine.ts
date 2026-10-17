@@ -38,15 +38,38 @@ export async function localAvailability(scope: object = globalThis): Promise<Loc
   }
 }
 
-/** 仅在模型已就绪时创建（下载需要用户手势，由 popup 触发） */
-export async function createLocalEngine(scope: object = globalThis): Promise<TextTranslator | null> {
-  if ((await localAvailability(scope)) !== 'available') return null;
-  try {
-    return await getApi(scope)!.create(LANGS);
-  } catch (err) {
+const GESTURE_EVENTS = ['pointerdown', 'keydown'] as const;
+
+function createAndReport(api: TranslatorApi, onReady: (translator: TextTranslator) => void): Promise<void> {
+  return api.create(LANGS).then(onReady, (err: unknown) => {
     console.warn('[沉浸翻译] 创建本地翻译器失败', err);
-    return null;
-  }
+  });
+}
+
+/**
+ * 创建本地翻译器，就绪后回调 onReady。
+ * Chrome 为防指纹按来源（origin）报告可用性：即使模型已装好，新网站也报 downloadable；
+ * 在该来源调用 create() 需要页面上的用户激活，模型已装好时会立即完成。因此：
+ * - available：直接创建，返回的 Promise 在创建结束后才 resolve（调用方可借此让首批段落用上本地引擎）
+ * - downloadable / downloading：在 target 上注册一次性的 pointerdown/keydown 监听（捕获阶段），
+ *   第一次手势时移除全部监听，并在事件处理函数内同步调用 create()（用户激活只在此时有效）
+ * - unavailable / unsupported：什么都不做
+ */
+export async function createLocalEngineOnGesture(
+  onReady: (translator: TextTranslator) => void,
+  scope: object = globalThis,
+  target: EventTarget = globalThis,
+): Promise<void> {
+  const status = await localAvailability(scope);
+  const api = getApi(scope);
+  if (!api) return;
+  if (status === 'available') return createAndReport(api, onReady);
+  if (status !== 'downloadable' && status !== 'downloading') return;
+  const onGesture = () => {
+    GESTURE_EVENTS.forEach((type) => target.removeEventListener(type, onGesture, true));
+    void createAndReport(api, onReady);
+  };
+  GESTURE_EVENTS.forEach((type) => target.addEventListener(type, onGesture, true));
 }
 
 export async function downloadLocalModel(

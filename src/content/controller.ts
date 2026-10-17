@@ -16,6 +16,7 @@ export type CreateVisibilityObserver = (onVisible: (els: readonly Element[]) => 
 
 export interface ControllerDeps {
   readonly doc: Document;
+  /** 初始本地引擎；之后可用 setLocalEngine 替换 */
   readonly local: TextTranslator | null;
   readonly llmEnabled: boolean;
   readonly mode: DisplayMode;
@@ -28,6 +29,7 @@ const isTr = (node: Node) => node.nodeName.toLowerCase() === TR_TAG;
 export class Controller {
   private enabled = false;
   private mode: DisplayMode;
+  private local: TextTranslator | null;
   private nextId = 0;
   private readonly units = new Map<string, Unit>();
   private readonly sources = new WeakMap<Element, string>();
@@ -42,6 +44,7 @@ export class Controller {
 
   constructor(private readonly deps: ControllerDeps) {
     this.mode = deps.mode;
+    this.local = deps.local;
   }
 
   get state(): { readonly enabled: boolean; readonly mode: DisplayMode } {
@@ -84,6 +87,12 @@ export class Controller {
   setMode(mode: DisplayMode): void {
     this.mode = mode;
     applyMode(this.deps.doc, this.enabled, mode);
+  }
+
+  /** 本地引擎就绪较晚时注入（如等到页面上第一次手势才创建）；已登记但还没有终稿的段落顺带补上本地翻译 */
+  setLocalEngine(engine: TextTranslator): void {
+    this.local = engine;
+    this.translateLocally([...this.units].map(([id, unit]) => ({ id, text: unit.text })));
   }
 
   handleResult(id: string, text: string): void {
@@ -145,7 +154,8 @@ export class Controller {
   }
 
   private translateLocally(items: readonly TranslateItem[]): void {
-    const { local, llmEnabled } = this.deps;
+    const { local } = this;
+    const { llmEnabled } = this.deps;
     if (!local) return;
     const level: Level = llmEnabled ? 'draft' : 'final';
     for (const item of items) {

@@ -208,4 +208,28 @@ describe('Controller', () => {
     await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
     expect([...units.values()].map((u) => u.block.id)).toEqual(['p2']);
   });
+
+  it('setLocalEngine 之后进入视口的新段落走本地翻译', async () => {
+    const { controller } = setup({ local: null });
+    controller.enable();
+    await flush();
+    expect(trText('p1')).toBeNull();
+    controller.setLocalEngine({ translate: async (t) => `新本地:${t}` });
+    const p = document.createElement('p');
+    p.id = 'p2';
+    p.textContent = 'New paragraph here';
+    document.body.append(p);
+    await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
+    expect(trText('p2')).toBe('新本地:New paragraph here');
+  });
+
+  it('未配置大模型时，setLocalEngine 会补翻此前因没有本地引擎而卡住的段落', async () => {
+    const { controller } = setup({ local: null, llmEnabled: false });
+    controller.enable();
+    await flush();
+    expect(trText('p1')).toBeNull();
+    controller.setLocalEngine({ translate: async (t) => `新本地:${t}` });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(trText('p1')).toBe('新本地:Hello world');
+  });
 });

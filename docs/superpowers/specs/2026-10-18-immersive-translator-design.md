@@ -74,9 +74,15 @@ options 大模型配置（baseURL/apiKey/model）+ 测试连接、全局自动�
 
 ### 4.3 local-engine
 
-- `Translator.availability({sourceLanguage:'en', targetLanguage:'zh'})`，`available` 时 `Translator.create()` 复用单例。
-- `downloadable/downloading` 时不在内容脚本触发下载（需要用户手势），由 popup 的「下载本地模型」按钮触发。
-- 全局 `Translator` 不存在 → 视为不可用。
+- `Translator.availability({sourceLanguage:'en', targetLanguage:'zh'})`，`available` 时直接 `Translator.create()`，每页一个实例。
+- **按来源报告可用性**：为防指纹，Chrome 按网站来源（origin）报告可用性——即使模型已在浏览器中装好，新网站也报 `downloadable`；
+  在该来源调用 `create()` 需要页面上的用户激活（点击/按键），模型已装好时会立即完成，之后该来源报 `available`。
+- 因此 `downloadable/downloading` 时，内容脚本在 `window` 上注册一次性的 `pointerdown`/`keydown` 监听（捕获阶段），
+  页面上第一次点击或按键时移除监听并在事件处理函数内调用 `create()`，成功后通过 `controller.setLocalEngine()` 注入；
+  此前已登记但尚无终稿的段落顺带补上本地翻译。效果：每个网站第一次需要在页面上点一下才有本地初稿。
+- `unavailable` / 全局 `Translator` 不存在时不注册监听，视为不可用。
+- popup 里看到的是扩展来源的可用性；popup 的「下载本地模型」按钮用于真正下载模型文件（只需一次）。
+- 本地引擎创建放在消息监听注册之后，不阻塞 popup/快捷键；`available` 时等创建完成再自动开启，让首批段落用上本地初稿。
 - **风险**：需要在实现第一步验证 Translator API 在内容脚本隔离世界中可用。若不可用，退路是由后台创建 offscreen document 承载本地翻译。
 
 ### 4.4 renderer（显示）

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { createLocalEngine, downloadLocalModel, localAvailability } from '@/src/content/local-engine';
+import { createLocalEngineOnGesture, downloadLocalModel, localAvailability } from '@/src/content/local-engine';
 
 function fakeScope(availability: string | Error, created = { translate: async (t: string) => `译:${t}` }) {
   return {
@@ -40,23 +40,73 @@ describe('localAvailability', () => {
   });
 });
 
-describe('createLocalEngine', () => {
+describe('createLocalEngineOnGesture', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('可用时返回翻译器', async () => {
-    const engine = await createLocalEngine(fakeScope('available'));
-    expect(await engine!.translate('hi')).toBe('译:hi');
+  /** 让 create() 返回的 Promise 链走完 */
+  const settle = () => new Promise((r) => setTimeout(r, 0));
+
+  it('available 时立即创建并回调，不注册手势监听', async () => {
+    const target = new EventTarget();
+    const add = vi.spyOn(target, 'addEventListener');
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, fakeScope('available'), target);
+    expect(onReady).toHaveBeenCalledTimes(1);
+    expect(await onReady.mock.calls[0]![0].translate('hi')).toBe('译:hi');
+    expect(add).not.toHaveBeenCalled();
   });
 
-  it('未下载模型时返回 null', async () => {
-    expect(await createLocalEngine(fakeScope('downloadable'))).toBeNull();
+  it('downloadable 时等页面上第一次 pointerdown 再创建，之后监听全部移除', async () => {
+    const target = new EventTarget();
+    const add = vi.spyOn(target, 'addEventListener');
+    const scope = fakeScope('downloadable');
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, scope, target);
+    expect(scope.Translator.create).not.toHaveBeenCalled();
+    expect(add.mock.calls.map(([type, , opts]) => [type, opts])).toEqual([
+      ['pointerdown', true],
+      ['keydown', true],
+    ]);
+
+    target.dispatchEvent(new Event('pointerdown'));
+    await settle();
+    expect(onReady).toHaveBeenCalledTimes(1);
+
+    target.dispatchEvent(new Event('keydown'));
+    target.dispatchEvent(new Event('pointerdown'));
+    await settle();
+    expect(scope.Translator.create).toHaveBeenCalledTimes(1);
   });
 
-  it('create 抛错时返回 null', async () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('downloading 时按键也能触发创建', async () => {
+    const target = new EventTarget();
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, fakeScope('downloading'), target);
+    target.dispatchEvent(new Event('keydown'));
+    await settle();
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('unavailable / unsupported 时不注册监听也不创建', async () => {
+    const target = new EventTarget();
+    const add = vi.spyOn(target, 'addEventListener');
+    const scope = fakeScope('unavailable');
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, scope, target);
+    await createLocalEngineOnGesture(onReady, {}, target);
+    expect(add).not.toHaveBeenCalled();
+    expect(scope.Translator.create).not.toHaveBeenCalled();
+    expect(onReady).not.toHaveBeenCalled();
+  });
+
+  it('create 抛错时告警且不回调', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const scope = fakeScope('available');
     scope.Translator.create.mockRejectedValueOnce(new Error('fail'));
-    expect(await createLocalEngine(scope)).toBeNull();
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, scope, new EventTarget());
+    expect(onReady).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalled();
   });
 });
 
