@@ -101,6 +101,7 @@ export class Controller {
 
   private flush(): void {
     this.flushTimer = undefined;
+    this.releaseDetached();
     const blocks = [...this.pending];
     this.pending.clear();
     const items = blocks.flatMap((block) => this.prepare(block) ?? []);
@@ -129,7 +130,14 @@ export class Controller {
     return { id, text: unit.text };
   }
 
-  /** 释放一个永远不会到达 final 的任务条目（仅在没有大模型精翻兜底时调用） */
+  /** 段落已移出 DOM 时，它的终稿可能永远不会到达；释放条目，避免 units 无限增长 */
+  private releaseDetached(): void {
+    for (const [id, unit] of this.units) {
+      if (!unit.block.isConnected) this.abandon(id);
+    }
+  }
+
+  /** 释放一个永远不会到达 final 的任务条目 */
   private abandon(id: string): void {
     const unit = this.units.get(id);
     this.units.delete(id);

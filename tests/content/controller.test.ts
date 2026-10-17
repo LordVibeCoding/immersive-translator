@@ -191,4 +191,21 @@ describe('Controller', () => {
     await Promise.resolve();
     expect(trText('p1')).toBe('本地:Hello world');
   });
+
+  it('段落被移出 DOM 后，下次 flush 释放它的任务条目', async () => {
+    const { controller } = setup({
+      local: { translate: () => new Promise<string>(() => {}) },
+    });
+    controller.enable();
+    await flush();
+    const units = (controller as unknown as { units: Map<string, { block: Element }> }).units;
+    expect([...units.values()].map((u) => u.block.id)).toEqual(['p1']);
+    byId('p1').remove();
+    const p = document.createElement('p');
+    p.id = 'p2';
+    p.textContent = 'New paragraph here';
+    document.body.append(p);
+    await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
+    expect([...units.values()].map((u) => u.block.id)).toEqual(['p2']);
+  });
 });
