@@ -1,0 +1,29 @@
+{
+  "name": "immersive-translator",
+  "description": "自用沉浸式翻译插件",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "wxt build && playwright test",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "idb-keyval": "^6.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@vitest/coverage-v8": "^5.0.5",
+    "fake-indexeddb": "^6.2.6",
+    "happy-dom": "^21.0.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "wxt": "^0.21.4"
+  }
+}
