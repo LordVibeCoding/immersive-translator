@@ -27,3 +27,5 @@ export const LLM_ERROR_DETAIL_MAX = 200;
 export const PORT_NAME = 'translate';
 export const LAST_ERROR_KEY = 'lastError';
 export const TR_TAG = 'it-tr';
+export const CACHE_DB_NAME = 'immersive-translator';
+export const CACHE_STORE_NAME = 'translations';
