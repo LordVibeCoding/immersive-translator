@@ -20,6 +20,8 @@ export const BATCH_MAX_ITEMS = 20;
 export const BATCH_MAX_CHARS = 2500;
 export const BATCH_WAIT_MS = 150;
 export const MAX_CONCURRENT_REQUESTS = 3;
+/** 大模型错误响应正文在错误信息中保留的最大字符数 */
+export const LLM_ERROR_DETAIL_MAX = 200;
 
 /** 通信、存储与 DOM 标记 */
 export const PORT_NAME = 'translate';

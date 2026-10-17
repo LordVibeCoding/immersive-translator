@@ -1,4 +1,5 @@
 import type { LlmConfig } from '../shared/settings';
+import { LLM_ERROR_DETAIL_MAX } from '../shared/constants';
 import { createItemParser, createSseDecoder } from './stream-parser';
 
 export interface ChatMessage {
@@ -7,8 +8,6 @@ export interface ChatMessage {
 }
 
 export type FetchFn = (input: string, init: RequestInit) => Promise<Response>;
-
-const ERROR_DETAIL_MAX = 200;
 
 export function buildMessages(pageTitle: string, texts: readonly string[]): ChatMessage[] {
   const system = [
@@ -51,7 +50,7 @@ export async function streamTranslate(
   });
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => '');
-    throw new Error(`大模型请求失败 HTTP ${res.status}: ${detail.slice(0, ERROR_DETAIL_MAX)}`);
+    throw new Error(`大模型请求失败 HTTP ${res.status}: ${detail.slice(0, LLM_ERROR_DETAIL_MAX)}`);
   }
   const items = createItemParser((n, text) => {
     if (n >= 1 && n <= texts.length) onItem(n - 1, text);
