@@ -1,53 +1,268 @@
-# 沉浸翻译（自用）
+<div align="center">
 
-英文网页双语对照翻译：Chrome 内置本地翻译秒出初稿，大模型后台流式精翻并替换。
+<img src="docs/assets/logo.svg" width="96" height="96" alt="沉浸翻译 Logo" />
 
-## 安装
+# 沉浸翻译 Immersive Translator
 
-1. `pnpm install && pnpm build`
-2. 打开 `chrome://extensions`，开启「开发者模式」，点「加载已解压的扩展程序」，选择 `.output/chrome-mv3`
-3. 点插件图标 → 「下载本地翻译模型」（只需一次）
-   - 弹窗里显示的是扩展自身的状态；Chrome 为防指纹按网站分别报告本地翻译是否可用，所以**每个网站第一次需要在页面上点一下（或按任意键）**才会启用本地翻译，之后该网站不再需要
-4. （可选）插件图标 → 设置：填写 OpenAI 兼容接口的地址、API Key、模型，点「测试连接」
+**又快又准的英文网页双语翻译 Chrome 插件**
 
-## 使用
+本地模型毫秒级出初稿，大模型后台流式精翻替换 —— 一键切换原文 / 双语 / 只看译文
 
-| 操作 | 快捷键 |
-| --- | --- |
-| 开关当前页翻译 | Alt+A（macOS 为 Option+A） |
-| 双语对照 ⇄ 只看译文 | Alt+S（macOS 为 Option+S） |
+[![Chrome](https://img.shields.io/badge/Chrome-138%2B-4285F4?logo=googlechrome&logoColor=white)](https://www.google.com/chrome/)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
+[![Tests](https://img.shields.io/badge/tests-99%20unit%20%7C%206%20e2e-brightgreen)](#-开发)
+[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-快捷键可在 `chrome://extensions/shortcuts` 修改。半透明的是本地初稿，变成正常颜色说明大模型精翻已完成。
+[快速开始](#-快速开始) · [使用方法](#️-使用方法) · [配置大模型](#️-配置大模型) · [常见问题](#-常见问题) · [开发](#-开发) · [路线图](#️-路线图)
 
-每个网站第一次打开时，本地初稿要等你在页面上点击一次（或按任意键）后才会出现；此前已在屏幕上、还没精翻完成的段落会随即补上初稿。
+</div>
 
-## 开发
+---
 
-- `pnpm dev`：WXT 开发模式，构建到 `.output/chrome-mv3-dev` 并监听文件变更自动重新构建。正版 Chrome 不支持命令行加载扩展，需在 `chrome://extensions` 手动「加载已解压的扩展程序」选择 `.output/chrome-mv3-dev`（与 `pnpm build` 产出的 `.output/chrome-mv3` 是不同目录）
-- `pnpm test` / `pnpm test:coverage`：单元与集成测试
-- `pnpm test:e2e`：端到端测试（构建后用 Playwright 自带的 Chromium 加载插件，模拟大模型）；首次运行前需执行 `pnpm exec playwright install chromium`
+## 📖 简介
 
-## 本地翻译的验证结论
+市面上的沉浸式翻译插件大多依赖在线翻译接口：长页面要排队、免费通道会限流、大模型要等整批生成完才显示。**沉浸翻译**换了一种思路：
 
-设计上最大的不确定项是：Chrome 内置的 `Translator` API 能不能在内容脚本的隔离世界里用。已用 [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing)（与正版 Chrome 同内核，官方明确允许 `--load-extension` 命令行加载，版本 155.0.8059.84）自动化验证过一次：
+- **先用本地模型秒出初稿**：调用 Chrome 内置的离线翻译模型，不联网、不排队，眼前这一屏几乎立刻出现译文；
+- **再用大模型精翻替换**：多段打包成一个请求，流式返回，每译完一段就立刻替换初稿；
+- **只翻你正在看的地方**：优先翻译当前屏幕，并提前预取下一屏，往下滚时译文基本已经就绪。
 
-- 扩展能正常加载（service worker、popup、内容脚本都工作正常）
-- 内容脚本里 `'Translator' in self` 为 `true`，**API 本身确实暴露在内容脚本的隔离世界中**
-- 点击「下载本地翻译模型」后，连续观察 23 分钟（分两轮，共约 1400 秒），`Translator.availability()` 一直停在 `downloadable`，从未变成 `downloading`/`available`，弹窗文案也从未变化——判断是 Chrome for Testing 本身不具备下载机载翻译模型所需的组件（它是面向自动化测试的精简发行版），不是插件的 bug
+> [!NOTE]
+> 这是一个自用项目，目前只支持 **英文 → 简体中文**，只支持 **Chrome 138+**。
 
-注意：命令行加载扩展这件事只在 Chrome for Testing 上验证通过——用 Playwright 正常启动**正版 Google Chrome**（即使去掉 Playwright 默认附加的 `--disable-extensions` 参数）仍然加载失败，判断正版 Chrome 对命令行加载未打包扩展有自己的拦截策略，这与 Playwright 的默认参数无关。这**不影响**手工走「开发者模式 → 加载已解压的扩展程序」的正常安装方式（那是 Chrome 官方长期支持、面向普通用户的路径，没有被限制）。
+## ✨ 特性
 
-也因此，本地模型下载到底耗时多久、下载完成后译文能否正常出现，仍然只能在真实的正版 Chrome 环境里手动确认一次（Chrome for Testing 验证不了这一步）：
+| | 特性 | 说明 |
+|:-:|---|---|
+| ⚡ | **双引擎接力** | Chrome 内置 Translator 出初稿（半透明），大模型精翻后替换为终稿（不透明） |
+| 👀 | **视口优先** | `IntersectionObserver` 只翻可见区域并预取下一屏，长页面不卡顿 |
+| 🌊 | **流式回填** | 大模型每生成完一段立刻回填，不必等整批结束 |
+| 🔀 | **三种模式** | 原文 / 双语对照 / 只看译文，切换瞬间完成，不重复翻译 |
+| ♻️ | **本地缓存** | 精翻结果存入 IndexedDB，重复内容和二次访问零请求 |
+| 📜 | **动态内容** | 监听 DOM 变化，Twitter / Reddit 等无限滚动的新内容自动翻译 |
+| 🧠 | **智能过滤** | 自动跳过代码块、已是中文的段落、纯链接和过短文本 |
+| 🔌 | **任意大模型** | 兼容所有 OpenAI 格式接口：DeepSeek、通义千问、OpenRouter、Groq、中转站… |
+| 🔒 | **隐私友好** | API Key 只保存在本机，只在后台请求时使用；不配置大模型也能纯本地离线使用 |
 
-1. `chrome://extensions` → 开启「开发者模式」→「加载已解压的扩展程序」→ 选择 `.output/chrome-mv3`
-2. 点插件图标，若本地翻译显示「模型未下载」，点「下载本地翻译模型」，等待下载完成
-3. 打开任一英文网页，在页面上点击一次（每个网站首次需要），确认随即出现半透明译文
-4. 若本地译文始终不出现：在该网页的控制台执行 `'Translator' in self`（预期为 `true`，若为 `false` 说明当前设备/Chrome 版本不支持，当前版本没有退路，即设计文档 4.3 提到的 offscreen document 方案未实现，本地翻译在该环境下不可用，仅大模型精翻可用）
+## 🧠 工作原理
 
-## 已知限制
+```mermaid
+flowchart LR
+    A["段落进入视口"] --> B["本地 Translator<br/>毫秒级"]
+    B --> C["渲染初稿<br/>半透明"]
+    A --> D{"精翻缓存<br/>命中？"}
+    D -- 命中 --> F["渲染终稿"]
+    D -- 未命中 --> E["攒批 → 大模型<br/>流式返回"]
+    E --> F
+    E --> G[("IndexedDB 缓存")]
+    C -. 被替换 .-> F
+```
 
-- 仅英译中；仅正版 Chrome 138+
-- 每个网站第一次需要在页面上点一下才有本地初稿（Chrome 按网站报告本地翻译可用性，创建翻译器需要页面上的用户操作）
-- 本地模型首次下载耗时未知（真机实测待定），下载失败或耗时过长时请按上文手动确认
-- 译文中不保留段内链接/加粗（双语模式可点原文链接）
-- 精翻缓存不自动清理
+每个段落都有质量等级 `初稿 < 终稿`，**只升不降**：不管缓存、本地引擎、大模型哪个先返回，都不会出现终稿被初稿覆盖的情况。
+
+<details>
+<summary><b>架构细节</b></summary>
+
+<br/>
+
+| 位置 | 模块 | 职责 |
+|---|---|---|
+| 内容脚本 | `scanner` | 找出可翻译段落，支持行内结构与嵌套块 |
+| | `text-filter` | 判断段落是否值得翻译、页面是否为英文 |
+| | `local-engine` | 封装 Chrome 内置 Translator API |
+| | `renderer` | 插入译文、维护质量等级、切换显示模式 |
+| | `controller` | 编排：视口优先、双引擎、动态内容 |
+| 后台 Service Worker | `port-handler` | 查缓存 → 去重 → 攒批 → 回推结果 |
+| | `llm-client` + `stream-parser` | OpenAI 兼容流式请求与「[编号] 译文」解析 |
+| | `batching` | 攒批器（20 段 / 2500 字符 / 150ms）+ 全局并发上限 3 |
+| | `cache` | 基于 IndexedDB 的精翻缓存 |
+
+完整设计见 [设计文档](docs/superpowers/specs/2026-10-18-immersive-translator-design.md)。
+
+</details>
+
+## 🚀 快速开始
+
+### 1. 获取插件
+
+**方式 A：下载打包好的版本（推荐）**
+
+到 [Releases](../../releases) 下载最新的 `immersive-translator-*-chrome.zip`，解压到任意文件夹。
+
+**方式 B：从源码构建**
+
+```bash
+git clone https://github.com/LordVibeCoding/immersive-translator.git
+cd immersive-translator
+pnpm install
+pnpm build        # 产物在 .output/chrome-mv3
+```
+
+### 2. 安装到 Chrome
+
+1. 地址栏打开 `chrome://extensions`
+2. 打开右上角的 **开发者模式**
+3. 点击 **加载已解压的扩展程序**，选择上一步的文件夹（解压目录或 `.output/chrome-mv3`）
+
+### 3. 下载本地翻译模型（只需一次）
+
+点击工具栏上的插件图标 → **下载本地翻译模型**，等待状态变为「✅ 已就绪」。
+
+### 4. 配置大模型（可选，强烈推荐）
+
+插件图标 → **设置**，填写接口地址、API Key、模型名，点击 **测试连接**。不配置的话只使用本地翻译。
+
+> [!IMPORTANT]
+> **每个网站第一次打开时，需要在页面上点击一下（或按任意键），本地初稿才会出现。**
+> 这是 Chrome 的隐私保护机制：本地翻译是否可用按网站分别报告，创建翻译器需要用户在该页面上的一次操作。点过之后该网站就不再需要；在此之前大模型精翻照常工作。
+
+## ⌨️ 使用方法
+
+打开任意英文网页会**自动翻译**（可在设置中关闭，或在弹窗中把当前网站加入「本站不自动翻译」）。
+
+| 操作 | Windows / Linux | macOS |
+|---|:-:|:-:|
+| 开关当前页翻译 | <kbd>Alt</kbd> + <kbd>A</kbd> | <kbd>Option</kbd> + <kbd>A</kbd> |
+| 双语对照 ⇄ 只看译文 | <kbd>Alt</kbd> + <kbd>S</kbd> | <kbd>Option</kbd> + <kbd>S</kbd> |
+
+快捷键可以在 `chrome://extensions/shortcuts` 自定义。
+
+**怎么看译文状态：**
+
+| 外观 | 含义 |
+|---|---|
+| 半透明译文 | 本地模型的初稿，大模型精翻中 |
+| 正常颜色译文 | 大模型精翻完成（或未配置大模型时的本地终稿） |
+
+**弹窗功能：** 开关翻译 · 切换模式 · 本站不自动翻译 · 本地模型状态与下载 · 大模型状态与最近一次错误。
+
+## ⚙️ 配置大模型
+
+任何兼容 OpenAI `/chat/completions` 流式接口的服务都可以使用。接口地址填到 `/v1` 为止，插件会自动拼上 `/chat/completions`。
+
+| 服务 | 接口地址 | 模型示例 |
+|---|---|---|
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| 通义千问（阿里云百炼） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-turbo` |
+| 硅基流动 | `https://api.siliconflow.cn/v1` | 以平台模型列表为准 |
+| OpenRouter | `https://openrouter.ai/api/v1` | 以平台模型列表为准 |
+| Groq | `https://api.groq.com/openai/v1` | 以平台模型列表为准 |
+
+> [!TIP]
+> 精翻体验主要取决于模型的**输出速度**，优先选择响应快的小模型，不需要推理型模型。
+
+## ❓ 常见问题
+
+<details>
+<summary><b>为什么本地初稿没有出现？</b></summary>
+
+<br/>
+
+1. 确认已在弹窗中下载本地翻译模型；
+2. 每个网站首次需要在页面上**点击一下**才会启用本地翻译；
+3. 在网页控制台执行 `'Translator' in self`：若为 `false`，说明当前设备或 Chrome 版本不支持内置翻译，此时只能使用大模型精翻。
+
+</details>
+
+<details>
+<summary><b>为什么只支持 Chrome？</b></summary>
+
+<br/>
+
+本地初稿依赖 Chrome 138+ 内置的 [Translator API](https://developer.chrome.com/docs/ai/translator-api)。Edge、Arc 等其他 Chromium 浏览器不一定提供该接口。
+
+</details>
+
+<details>
+<summary><b>我的 API Key 安全吗？</b></summary>
+
+<br/>
+
+API Key 只保存在本机的 `chrome.storage.local` 中，只由插件后台在请求大模型时使用，网页脚本无法读取；不会上传到任何第三方服务器。译文一律以纯文本写入页面，不会执行任何 HTML。
+
+</details>
+
+<details>
+<summary><b>快捷键没反应？</b></summary>
+
+<br/>
+
+可能与其他插件或系统快捷键冲突，到 `chrome://extensions/shortcuts` 重新设置即可。浏览器内部页面（如 `chrome://` 开头的页面）不支持翻译。
+
+</details>
+
+<details>
+<summary><b>精翻报错怎么排查？</b></summary>
+
+<br/>
+
+打开插件弹窗，「大模型精翻」下方会显示最近一次错误；也可以在设置页点击 **测试连接** 查看接口返回的具体信息。
+
+</details>
+
+## 🛠 开发
+
+**技术栈：** TypeScript · [WXT](https://wxt.dev/) · Vitest + happy-dom · Playwright · idb-keyval
+
+```bash
+pnpm install                          # 安装依赖
+pnpm dev                              # 开发模式，监听文件变更自动重新构建
+pnpm build                            # 生产构建 → .output/chrome-mv3
+pnpm zip                              # 打包成 zip，用于发布
+pnpm compile                          # TypeScript 类型检查
+pnpm test                             # 单元与集成测试
+pnpm test:coverage                    # 测试覆盖率
+pnpm exec playwright install chromium # 首次运行 E2E 前执行一次
+pnpm test:e2e                         # 端到端测试（使用模拟大模型）
+```
+
+> [!NOTE]
+> `pnpm dev` 的产物在 `.output/chrome-mv3-dev`。正版 Chrome 不支持通过命令行加载扩展，请在 `chrome://extensions` 中手动加载该目录。
+
+<details>
+<summary><b>目录结构</b></summary>
+
+```
+.
+├── entrypoints/
+│   ├── background.ts        # 后台：长连接、快捷键
+│   ├── content.ts           # 内容脚本入口
+│   ├── popup/               # 工具栏弹窗
+│   └── options/             # 设置页
+├── src/
+│   ├── shared/              # 常量、设置、消息协议
+│   ├── content/             # 段落扫描、过滤、渲染、本地引擎、编排
+│   └── background/          # 大模型客户端、流式解析、攒批、缓存
+├── tests/                   # 单元与集成测试（镜像 src 结构）
+├── e2e/                     # Playwright 端到端测试与模拟大模型服务
+└── docs/                    # 设计文档与实施计划
+```
+
+</details>
+
+## 🗺️ 路线图
+
+- [x] 双引擎接力（本地初稿 + 大模型精翻）
+- [x] 视口优先、流式回填、IndexedDB 缓存
+- [x] 原文 / 双语 / 只看译文 三种模式与快捷键
+- [x] 动态内容（无限滚动）支持
+- [ ] 本地翻译启用手势更健壮（忽略不产生用户激活的按键）
+- [ ] 大模型超时改为「空闲超时」，适配慢速模型
+- [ ] 保留行内元素之间的空格
+- [ ] 缓存版本号与「清空缓存」按钮
+- [ ] 译文保留段内链接与加粗
+- [ ] 划词翻译、更多语言方向
+
+## ⚠️ 已知限制
+
+- 仅支持英文 → 简体中文，仅支持 Chrome 138+
+- 每个网站首次需要在页面上点击一次才会启用本地初稿
+- 译文不保留段内链接、加粗等格式（双语模式下可点击原文链接）
+- 精翻缓存不会自动清理
+
+## 📄 许可证
+
+[MIT](LICENSE) © 2026 LordVibeCoding

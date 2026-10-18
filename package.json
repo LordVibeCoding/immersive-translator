@@ -1,12 +1,14 @@
 {
   "name": "immersive-translator",
-  "description": "自用沉浸式翻译插件",
+  "description": "又快又准的英文网页双语翻译 Chrome 插件：本地模型秒出初稿，大模型流式精翻",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "wxt",
     "build": "wxt build",
+    "zip": "wxt zip",
     "compile": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
