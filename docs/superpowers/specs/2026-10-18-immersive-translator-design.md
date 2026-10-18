@@ -62,6 +62,9 @@ options 大模型配置（baseURL/apiKey/model）+ 测试连接、全局自动�
 ### 4.1 scanner（找段落）
 
 - 用 TreeWalker 遍历文本节点；对每个含有效文字的文本节点，向上找到**最近的非行内祖先**作为「段落块」。
+  （v0.2.2 起）是否「行内」按**实际渲染样式**判断：`display: inline/contents` 才并进段落；绝对/固定定位的元素（如「New」徽章）、
+  块级或 flex 化的 `<a>/<span>`（如下拉菜单项）、`inline-block` 的徽章胶囊都单独成段；`inline-block` 的 `code/kbd` 等正文标签仍并进段落；
+  拿不到计算样式时按下面的标签集合判断。
   行内标签集合：`a b strong i em span code small sup sub mark abbr time label u s br img font cite q kbd var samp del ins wbr`。
 - 跳过区域（行内 `code` 属于正文不跳过，代码块由 `pre` 跳过）：`pre script style noscript textarea input select svg math [contenteditable] [translate=no] .notranslate`，以及插件自己插入的节点。
 - 去重：段落块用 `WeakSet`/data 属性标记，嵌套时只取最内层块。

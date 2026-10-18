@@ -12,7 +12,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
-[![Tests](https://img.shields.io/badge/tests-125%20unit%20%7C%2010%20e2e-brightgreen)](#-开发)
+[![Tests](https://img.shields.io/badge/tests-130%20unit%20%7C%2011%20e2e-brightgreen)](#-开发)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -45,7 +45,7 @@
 | 🖱️ | **右键菜单** | 页面右键「沉浸翻译」子菜单：开关、切换模式、本站设置一步到位 |
 | ♻️ | **本地缓存** | 精翻结果存入 IndexedDB，重复内容和二次访问零请求 |
 | 📜 | **动态内容** | 监听 DOM 变化，Twitter / Reddit 等无限滚动的新内容自动翻译 |
-| 🧠 | **智能过滤** | 自动跳过代码块、已是中文的段落、纯链接和过短文本 |
+| 🧠 | **智能分段** | 按网页实际渲染效果切分段落（菜单项、徽章各自翻译）；自动跳过代码块、已是中文的段落、纯链接和过短文本 |
 | 🔌 | **任意大模型** | 兼容所有 OpenAI 格式接口：DeepSeek、通义千问、OpenRouter、Groq、中转站… |
 | 🔒 | **隐私友好** | API Key 只保存在本机，只在后台请求时使用；不配置大模型也能纯本地离线使用 |
 

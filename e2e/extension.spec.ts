@@ -102,6 +102,20 @@ test('只看译文：原地替换文字，不破坏表单控件与布局，切�
   await expect(page.locator('#edit')).toHaveText('✎ Edit译:✎ Edit');
 });
 
+test('导航菜单：徽章与块级菜单项各自成段翻译，只看译文时不会被清空', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await expect(page.locator('#dd2 > it-tr')).toHaveText('译:Domain Privacy');
+
+  await sendCommand(sw, server.url, 'toggle-mode');
+  const ownText = (sel: string) => page.locator(sel).evaluate((el) => el.firstChild?.textContent?.trim());
+  await expect.poll(() => ownText('#nav-sec')).toBe('译:Security');
+  await expect(page.locator('#badge')).toHaveText('译:New', { useInnerText: true });
+  await expect(page.locator('#dd1')).toHaveText('译:SSL Certificates', { useInnerText: true });
+  await expect(page.locator('#dd2')).toHaveText('译:Domain Privacy', { useInnerText: true });
+});
+
 test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ context, sw, server }) => {
   await configure(sw, server);
   const pageA = await context.newPage();

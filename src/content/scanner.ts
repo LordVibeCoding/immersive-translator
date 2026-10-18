@@ -20,10 +20,30 @@ const SKIP_SELECTOR = [
   '[contenteditable=""]', '[contenteditable="true"]', '[translate="no"]', '.notranslate', TR_TAG,
 ].join(',');
 
+/** 语义上属于正文的行内标签：网站常把它们设成 inline-block 做成小方块，仍应并进段落 */
+const TEXT_LEVEL_TAGS: ReadonlySet<string> = new Set([
+  'CODE', 'KBD', 'VAR', 'SAMP', 'ABBR', 'MARK', 'SUB', 'SUP', 'Q', 'CITE', 'TIME',
+]);
+
+/**
+ * 是否属于所在段落的行内文字。按实际渲染样式判断：网站常把 <a>/<span> 设成块级菜单项、
+ * 绝对定位的「New」徽章或 inline-block 的标签胶囊，它们在视觉上是独立的，应单独成段。
+ * 拿不到计算样式时（未渲染或测试环境默认行内显示为空）按标签判断。
+ */
+function isInlineText(el: Element): boolean {
+  const style = el.ownerDocument.defaultView?.getComputedStyle(el);
+  if (style?.position === 'absolute' || style?.position === 'fixed') return false;
+  const display = style?.display ?? '';
+  if (display === 'inline' || display === 'contents') return true;
+  if (display === 'inline-block' || display === 'inline-flex') return TEXT_LEVEL_TAGS.has(el.tagName);
+  if (display) return false;
+  return INLINE_TAGS.has(el.tagName);
+}
+
 /** 向上跳过行内元素，返回最近的块级祖先（含自身） */
 export function nearestBlock(el: Element): Element {
   let current = el;
-  while (INLINE_TAGS.has(current.tagName) && current.parentElement) current = current.parentElement;
+  while (isInlineText(current) && current.parentElement) current = current.parentElement;
   return current;
 }
 

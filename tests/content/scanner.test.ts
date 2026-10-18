@@ -69,4 +69,39 @@ describe('scanner', () => {
     expect(ids(findBlocks(document.body))).toEqual(['p']);
     expect(readUnit(byId('p'))?.text).toBe('Press Ctrl and n, ok, old, new, longword');
   });
+
+  describe('按实际渲染样式判断是否独立成段', () => {
+    it('被设成块级的 <a>（如下拉菜单项）各自成段，不合并成一整段', () => {
+      document.body.innerHTML =
+        '<div id="menu"><a id="i1" style="display:block">SSL Certificates</a><a id="i2" style="display:flex">Domain Privacy</a></div>';
+      expect(ids(findBlocks(document.body))).toEqual(['i1', 'i2']);
+      expect(readUnit(byId('i1'))?.text).toBe('SSL Certificates');
+      expect(readUnit(byId('menu'))).toBeNull();
+    });
+
+    it('绝对定位的小标签（如 New 徽章）单独成段，不并进菜单项文字', () => {
+      document.body.innerHTML =
+        '<ul><li id="li"><a href="#">Security <span id="badge" style="position:absolute">New</span></a></li></ul>';
+      expect(readUnit(byId('li'))?.text).toBe('Security');
+      expect(readUnit(byId('badge'))?.text).toBe('New');
+    });
+
+    it('inline-block 的 span 徽章单独成段', () => {
+      document.body.innerHTML = '<p id="p">Account <span id="b" style="display:inline-block">New</span></p>';
+      expect(readUnit(byId('p'))?.text).toBe('Account');
+      expect(readUnit(byId('b'))?.text).toBe('New');
+    });
+
+    it('inline-block 的 kbd/code 仍属于段落正文', () => {
+      document.body.innerHTML =
+        '<p id="p">Press <kbd style="display:inline-block">Ctrl</kbd> and run <code style="display:inline-block">ls</code> now</p>';
+      expect(ids(findBlocks(document.body))).toEqual(['p']);
+      expect(readUnit(byId('p'))?.text).toBe('Press Ctrl and run ls now');
+    });
+
+    it('display:inline 的 div 并进所在段落', () => {
+      document.body.innerHTML = '<div id="p">Hello <div style="display:inline">dear</div> friend</div>';
+      expect(readUnit(byId('p'))?.text).toBe('Hello dear friend');
+    });
+  });
 });
