@@ -34,6 +34,14 @@ describe('normalizeSettings', () => {
     expect(s.mode).toBe('only');
     expect(s.autoTranslate).toBe(false);
   });
+
+  it('悬浮球：隐藏站点列表过滤非字符串，位置限制在 0~1 之间', () => {
+    expect(normalizeSettings({ ballHiddenSites: ['a.com', 2] }).ballHiddenSites).toEqual(['a.com']);
+    expect(normalizeSettings({ ballTop: 0.3 }).ballTop).toBe(0.3);
+    expect(normalizeSettings({ ballTop: 5 }).ballTop).toBe(1);
+    expect(normalizeSettings({ ballTop: -1 }).ballTop).toBe(0);
+    expect(normalizeSettings({ ballTop: 'x' }).ballTop).toBe(DEFAULT_SETTINGS.ballTop);
+  });
 });
 
 describe('isLlmConfigured', () => {

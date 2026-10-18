@@ -12,7 +12,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
-[![Tests](https://img.shields.io/badge/tests-103%20unit%20%7C%207%20e2e-brightgreen)](#-开发)
+[![Tests](https://img.shields.io/badge/tests-117%20unit%20%7C%209%20e2e-brightgreen)](#-开发)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -41,6 +41,8 @@
 | 👀 | **视口优先** | `IntersectionObserver` 只翻可见区域并预取下一屏，长页面不卡顿 |
 | 🌊 | **流式回填** | 大模型每生成完一段立刻回填，不必等整批结束 |
 | 🔀 | **三种模式** | 原文 / 双语对照 / 只看译文，切换瞬间完成，不重复翻译 |
+| 🎈 | **侧边悬浮球** | 页面右侧贴边的小球，单击开关翻译，悬停展开菜单，可上下拖动 |
+| 🖱️ | **右键菜单** | 页面右键「沉浸翻译」子菜单：开关、切换模式、本站设置一步到位 |
 | ♻️ | **本地缓存** | 精翻结果存入 IndexedDB，重复内容和二次访问零请求 |
 | 📜 | **动态内容** | 监听 DOM 变化，Twitter / Reddit 等无限滚动的新内容自动翻译 |
 | 🧠 | **智能过滤** | 自动跳过代码块、已是中文的段落、纯链接和过短文本 |
@@ -137,7 +139,16 @@ pnpm build        # 产物在 .output/chrome-mv3
 | 半透明译文 | 本地模型的初稿，大模型精翻中 |
 | 正常颜色译文 | 大模型精翻完成（或未配置大模型时的本地终稿） |
 
-**弹窗功能：** 开关翻译 · 切换模式 · 本站不自动翻译 · 本地模型状态与下载 · 大模型状态与最近一次错误。
+**三种操作入口，随手可用：**
+
+| 入口 | 能做什么 |
+|---|---|
+| 🎈 **页面右侧悬浮球** | 单击 = 开/关翻译；鼠标悬停展开菜单：切换模式、本站不自动翻译、本站隐藏悬浮球；按住可上下拖动，位置会记住 |
+| 🖱️ **网页右键菜单** | 「沉浸翻译」子菜单：开启/关闭翻译、切换双语/只看译文、本站不自动翻译、本站显示/隐藏悬浮球 |
+| 🧩 **工具栏弹窗** | 开关翻译 · 切换模式 · 本站不自动翻译 · 本地模型状态与下载 · 大模型状态与最近一次错误 |
+
+> [!TIP]
+> 在某个网站隐藏了悬浮球后，想找回来：页面右键 →「沉浸翻译」→「本站显示 / 隐藏悬浮球」。
 
 ## ⚙️ 配置大模型
 

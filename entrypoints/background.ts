@@ -1,11 +1,12 @@
 import { browser } from 'wxt/browser';
 import { createSemaphore } from '@/src/background/batching';
 import { createIdbCache } from '@/src/background/cache';
+import { createMenus, handleMenuClick } from '@/src/background/context-menu';
 import { streamTranslate } from '@/src/background/llm-client';
 import { handlePort, type PortLike } from '@/src/background/port-handler';
 import { LAST_ERROR_KEY, MAX_CONCURRENT_REQUESTS, PORT_NAME } from '@/src/shared/constants';
 import type { TabCommand } from '@/src/shared/messages';
-import { loadSettings } from '@/src/shared/settings';
+import { loadSettings, saveSettings } from '@/src/shared/settings';
 
 const COMMAND_MESSAGES: Record<string, TabCommand> = {
   'toggle-translate': { type: 'toggle' },
@@ -32,13 +33,27 @@ export default defineBackground(() => {
     });
   });
 
+  const sendToTab = async (tabId: number, message: TabCommand) => {
+    await browser.tabs.sendMessage(tabId, message).catch((err: unknown) => {
+      console.warn('[沉浸翻译] 当前页面无法接收命令（可能是浏览器内部页面）', err);
+    });
+  };
+
+  browser.runtime.onInstalled.addListener(() => {
+    createMenus(browser.contextMenus).catch((err: unknown) => console.warn('[沉浸翻译] 创建右键菜单失败', err));
+  });
+
+  browser.contextMenus.onClicked.addListener((info, tab) => {
+    handleMenuClick(String(info.menuItemId), tab, { sendToTab, loadSettings, saveSettings }).catch((err: unknown) =>
+      console.warn('[沉浸翻译] 处理右键菜单失败', err),
+    );
+  });
+
   browser.commands.onCommand.addListener(async (command) => {
     const message = COMMAND_MESSAGES[command];
     if (!message) return;
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (tab?.id === undefined) return;
-    await browser.tabs.sendMessage(tab.id, message).catch((err: unknown) => {
-      console.warn('[沉浸翻译] 当前页面无法接收快捷键（可能是浏览器内部页面）', err);
-    });
+    await sendToTab(tab.id, message);
   });
 });

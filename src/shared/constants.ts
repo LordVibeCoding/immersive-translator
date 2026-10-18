@@ -31,3 +31,12 @@ export const LAST_ERROR_KEY = 'lastError';
 export const TR_TAG = 'it-tr';
 export const CACHE_DB_NAME = 'immersive-translator';
 export const CACHE_STORE_NAME = 'translations';
+
+/** 页面侧边悬浮球 */
+export const BALL_TAG = 'it-ball';
+/** 悬浮球直径（px） */
+export const BALL_SIZE = 36;
+/** 悬浮球默认垂直位置（占视口高度比例） */
+export const BALL_DEFAULT_TOP = 0.6;
+/** 指针移动超过该距离（px）视为拖动而不是点击 */
+export const BALL_DRAG_THRESHOLD = 4;

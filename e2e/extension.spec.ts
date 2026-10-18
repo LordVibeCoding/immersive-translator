@@ -96,6 +96,43 @@ test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ co
   await expect(pageA.locator('html')).not.toHaveClass(/it-only/);
 });
 
+test('悬浮球：单击开关本页翻译，菜单切换模式、隐藏后可通过设置恢复', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await expect(page.locator('#p1 > it-tr')).toHaveText(P1);
+
+  const ball = page.locator('it-ball .ball');
+  await expect(ball).toBeVisible();
+  await ball.click();
+  await expect(page.locator('html')).not.toHaveClass(/\bit-on\b/);
+  await expect(ball).toHaveClass(/off/);
+  await ball.click();
+  await expect(page.locator('html')).toHaveClass(/\bit-on\b/);
+
+  await ball.hover();
+  await page.locator('it-ball [data-act="mode"]').click();
+  await expect(page.locator('html')).toHaveClass(/it-only/);
+
+  await ball.hover();
+  await page.locator('it-ball [data-act="hide"]').click();
+  await expect(page.locator('it-ball')).toHaveCount(0);
+  // 等同于右键菜单「本站显示 / 隐藏悬浮球」：改设置后悬浮球恢复
+  await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const { settings } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({ settings: { ...settings, ballHiddenSites: [] } });
+  });
+  await expect(page.locator('it-ball .ball')).toBeVisible();
+});
+
+test('清单包含右键菜单权限与插件图标', async ({ context, sw }) => {
+  void context;
+  const manifest = await sw.evaluate(() => (globalThis as any).chrome.runtime.getManifest());
+  expect(manifest.permissions).toContain('contextMenus');
+  expect(manifest.icons?.['128']).toBeTruthy();
+});
+
 test('只看译文：混合块的子段落保持可见并在滚动到后被翻译', async ({ context, sw, server }) => {
   await configure(sw, server);
   const page = await context.newPage();
