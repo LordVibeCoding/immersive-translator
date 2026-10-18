@@ -12,7 +12,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
-[![Tests](https://img.shields.io/badge/tests-99%20unit%20%7C%206%20e2e-brightgreen)](#-开发)
+[![Tests](https://img.shields.io/badge/tests-103%20unit%20%7C%207%20e2e-brightgreen)](#-开发)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -128,7 +128,7 @@ pnpm build        # 产物在 .output/chrome-mv3
 | 开关当前页翻译 | <kbd>Alt</kbd> + <kbd>A</kbd> | <kbd>Option</kbd> + <kbd>A</kbd> |
 | 双语对照 ⇄ 只看译文 | <kbd>Alt</kbd> + <kbd>S</kbd> | <kbd>Option</kbd> + <kbd>S</kbd> |
 
-快捷键可以在 `chrome://extensions/shortcuts` 自定义。
+快捷键可以在 `chrome://extensions/shortcuts` 自定义。每个标签页的开关和模式**互相独立**，只作用于当前页面；最近一次选择的模式会作为新打开页面的默认模式。在未开启翻译的页面上切换模式，会同时开启该页翻译。
 
 **怎么看译文状态：**
 

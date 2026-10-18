@@ -141,7 +141,7 @@ options 大模型配置（baseURL/apiKey/model）+ 测试连接、全局自动�
   llm: { baseURL: string; apiKey: string; model: string }, // 任一为空视为未配置
   autoTranslate: boolean,      // 默认 true
   neverSites: string[],        // hostname 黑名单
-  mode: 'dual' | 'only',       // 默认 dual
+  mode: 'dual' | 'only',       // 默认 dual；仅作为新页面的默认模式，各标签页模式互相独立、不跨页同步
 }
 ```
 

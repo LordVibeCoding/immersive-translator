@@ -76,6 +76,26 @@ test('开关翻译、切换只看译文', async ({ context, sw, server }) => {
   await expect(page.locator('#p2 > it-tr')).toBeVisible();
 });
 
+test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const pageA = await context.newPage();
+  await pageA.goto(`${server.url}/a`);
+  await expect(pageA.locator('#p1 > it-tr')).toHaveText(P1);
+  const pageB = await context.newPage();
+  await pageB.goto(`${server.url}/b`);
+  await expect(pageB.locator('#p1 > it-tr')).toHaveText(P1);
+
+  await sendCommand(sw, `${server.url}/b`, 'toggle');
+  await expect(pageB.locator('html')).not.toHaveClass(/\bit-on\b/);
+  await expect(pageA.locator('html')).toHaveClass(/\bit-on\b/);
+
+  // 未开启翻译的页面上切换模式：本页开启并切到只看译文，A 页保持双语
+  await sendCommand(sw, `${server.url}/b`, 'toggle-mode');
+  await expect(pageB.locator('html')).toHaveClass(/\bit-on\b/);
+  await expect(pageB.locator('html')).toHaveClass(/it-only/);
+  await expect(pageA.locator('html')).not.toHaveClass(/it-only/);
+});
+
 test('只看译文：混合块的子段落保持可见并在滚动到后被翻译', async ({ context, sw, server }) => {
   await configure(sw, server);
   const page = await context.newPage();

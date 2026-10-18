@@ -2,17 +2,11 @@ import { browser } from 'wxt/browser';
 import { Controller, type CreateVisibilityObserver } from '@/src/content/controller';
 import { createLlmChannel } from '@/src/content/llm-channel';
 import { createLocalEngineOnGesture } from '@/src/content/local-engine';
+import { applyTabCommand } from '@/src/content/tab-commands';
 import { isEnglishPage } from '@/src/content/text-filter';
 import { PAGE_SAMPLE_CHARS, VIEWPORT_ROOT_MARGIN } from '@/src/shared/constants';
 import { isTabCommand, type PageState } from '@/src/shared/messages';
-import {
-  isLlmConfigured,
-  loadSettings,
-  normalizeSettings,
-  saveSettings,
-  SETTINGS_KEY,
-  shouldAutoTranslate,
-} from '@/src/shared/settings';
+import { isLlmConfigured, loadSettings, saveSettings, shouldAutoTranslate } from '@/src/shared/settings';
 
 const createVisibility: CreateVisibilityObserver = (onVisible) => {
   const io = new IntersectionObserver(
@@ -44,20 +38,9 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
       if (!isTabCommand(message)) return;
-      if (message.type === 'toggle') controller.toggle();
-      if (message.type === 'toggle-mode') {
-        const mode = controller.state.mode === 'dual' ? 'only' : 'dual';
-        controller.setMode(mode);
-        void saveSettings({ mode });
-      }
+      applyTabCommand(controller, message, (mode) => void saveSettings({ mode }));
       const state: PageState = { ...controller.state, hostname: location.hostname, localEngine: hasLocalEngine };
       sendResponse(state);
-    });
-
-    // 其它标签页切换模式后同步
-    browser.storage.onChanged.addListener((changes, area) => {
-      const change = changes[SETTINGS_KEY];
-      if (area === 'local' && change) controller.setMode(normalizeSettings(change.newValue).mode);
     });
 
     // 放在监听注册之后，不阻塞 popup/快捷键消息；模型对本站已就绪时等创建完成再开启，让首批段落用上本地初稿，
