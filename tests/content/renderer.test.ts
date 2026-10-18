@@ -5,6 +5,8 @@ import {
   injectStyles,
   isRendered,
   renderTranslation,
+  showInPlace,
+  showOriginal,
 } from '@/src/content/renderer';
 import { readUnit } from '@/src/content/scanner';
 
@@ -71,16 +73,46 @@ describe('renderer', () => {
     expect(document.querySelectorAll('#it-styles')).toHaveLength(1);
   });
 
-  it('段落继承到 0 字号时，--it-fs 改用最近已翻译祖先记录的字号', () => {
-    document.body.innerHTML =
-      '<div id="outer" style="--it-fs: 18px; font-size: 0px">Lead <span><p id="inner">Child text</p></span></div>';
-    renderTranslation(readUnit(byId('inner'))!, '子段落', 'final');
-    expect(byId('inner').style.getPropertyValue('--it-fs')).toBe('18px');
+  it('只看译文模式下渲染：译文原地替换文字，元素保持不变；showOriginal 恢复原文', () => {
+    document.body.innerHTML = '<p id="p">Hello there <b id="b">friend</b></p>';
+    applyMode(document, true, 'only');
+    renderTranslation(readUnit(byId('p'))!, '你好朋友', 'final');
+    expect(byId('p').firstChild!.textContent).toBe('你好朋友 ');
+    expect(byId('b').textContent).toBe('');
+    expect(trOf(byId('p'))!.textContent).toBe('你好朋友');
+
+    showOriginal(byId('p'));
+    expect(byId('p').firstChild!.textContent).toBe('Hello there ');
+    expect(byId('b').textContent).toBe('friend');
   });
 
-  it('字号正常时 --it-fs 记录段落自身的计算字号', () => {
-    document.body.innerHTML = '<p id="p" style="font-size: 20px">Hello world</p>';
-    renderTranslation(readUnit(byId('p'))!, '你好', 'final');
-    expect(byId('p').style.getPropertyValue('--it-fs')).toBe('20px');
+  it('只看译文模式下初稿升级为终稿时，原地文字同步更新', () => {
+    document.body.innerHTML = '<p id="p">Hello world</p>';
+    applyMode(document, true, 'only');
+    const unit = readUnit(byId('p'))!;
+    renderTranslation(unit, '初稿', 'draft');
+    renderTranslation(unit, '终稿', 'final');
+    expect(byId('p').firstChild!.textContent).toBe('终稿');
+    showOriginal(byId('p'));
+    expect(byId('p').firstChild!.textContent).toBe('Hello world');
+  });
+
+  it('双语模式下渲染不改动原文；之后 showInPlace 才替换', () => {
+    document.body.innerHTML = '<p id="p">Hello world</p>';
+    applyMode(document, true, 'dual');
+    renderTranslation(readUnit(byId('p'))!, '你好世界', 'final');
+    expect(byId('p').firstChild!.textContent).toBe('Hello world');
+    showInPlace(byId('p'));
+    expect(byId('p').firstChild!.textContent).toBe('你好世界');
+  });
+
+  it('clearTranslation 会先恢复原文；未渲染的块 showInPlace 什么都不做', () => {
+    document.body.innerHTML = '<p id="p">Hello world</p><p id="q">Other text</p>';
+    applyMode(document, true, 'only');
+    renderTranslation(readUnit(byId('p'))!, '你好世界', 'final');
+    clearTranslation(byId('p'));
+    expect(byId('p').textContent).toBe('Hello world');
+    showInPlace(byId('q'));
+    expect(byId('q').textContent).toBe('Other text');
   });
 });

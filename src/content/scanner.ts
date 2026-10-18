@@ -9,7 +9,7 @@ export interface Unit {
 }
 
 /** 行内标签（大写 tagName）；renderer 用它生成「只看译文」模式的隐藏选择器，保持两处一致 */
-export const INLINE_TAGS: ReadonlySet<string> = new Set([
+const INLINE_TAGS: ReadonlySet<string> = new Set([
   'A', 'B', 'STRONG', 'I', 'EM', 'SPAN', 'CODE', 'SMALL', 'SUP', 'SUB', 'MARK', 'ABBR',
   'TIME', 'LABEL', 'U', 'S', 'BR', 'IMG', 'FONT', 'CITE', 'Q', 'KBD', 'VAR', 'SAMP', 'DEL', 'INS', 'WBR',
 ]);
@@ -51,8 +51,13 @@ function directChildOf(block: Element, node: Node): Node {
   return current;
 }
 
+/** 段落自身的文字节点（不含嵌套块、跳过区域和插件插入的译文） */
+export function ownTextNodes(block: Element): Text[] {
+  return candidateTextNodes(block).filter((n) => nearestBlock(n.parentElement!) === block);
+}
+
 export function readUnit(block: Element): Unit | null {
-  const own = candidateTextNodes(block).filter((n) => nearestBlock(n.parentElement!) === block);
+  const own = ownTextNodes(block);
   const last = own.at(-1);
   if (!last) return null;
   return {

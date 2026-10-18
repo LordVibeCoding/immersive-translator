@@ -12,7 +12,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
-[![Tests](https://img.shields.io/badge/tests-117%20unit%20%7C%209%20e2e-brightgreen)](#-开发)
+[![Tests](https://img.shields.io/badge/tests-125%20unit%20%7C%2010%20e2e-brightgreen)](#-开发)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -40,7 +40,7 @@
 | ⚡ | **双引擎接力** | Chrome 内置 Translator 出初稿（半透明），大模型精翻后替换为终稿（不透明） |
 | 👀 | **视口优先** | `IntersectionObserver` 只翻可见区域并预取下一屏，长页面不卡顿 |
 | 🌊 | **流式回填** | 大模型每生成完一段立刻回填，不必等整批结束 |
-| 🔀 | **三种模式** | 原文 / 双语对照 / 只看译文，切换瞬间完成，不重复翻译 |
+| 🔀 | **三种模式** | 原文 / 双语对照 / 只看译文，切换瞬间完成，不重复翻译；只看译文原地替换文字，不破坏网页布局和表单 |
 | 🎈 | **侧边悬浮球** | 页面右侧贴边的小球，单击开关翻译，悬停展开菜单，可上下拖动 |
 | 🖱️ | **右键菜单** | 页面右键「沉浸翻译」子菜单：开关、切换模式、本站设置一步到位 |
 | ♻️ | **本地缓存** | 精翻结果存入 IndexedDB，重复内容和二次访问零请求 |

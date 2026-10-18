@@ -91,6 +91,37 @@ describe('Controller', () => {
     expect(document.documentElement.classList.contains('it-on')).toBe(false);
   });
 
+  it('只看译文：已翻译段落原地替换；切回双语或关闭翻译时恢复原文，再开启时重新替换', async () => {
+    const { controller, requests } = setup({ local: null });
+    controller.enable();
+    await flush();
+    controller.handleResult(requests[0]!.items[0]!.id, '你好世界');
+    const ownText = () => byId('p1').firstChild!.textContent;
+    expect(ownText()).toBe('Hello world');
+
+    controller.setMode('only');
+    expect(ownText()).toBe('你好世界');
+    controller.setMode('dual');
+    expect(ownText()).toBe('Hello world');
+
+    controller.setMode('only');
+    controller.disable();
+    expect(ownText()).toBe('Hello world');
+    controller.enable();
+    expect(ownText()).toBe('你好世界');
+  });
+
+  it('只看译文：原地替换不会被当成原文变化而重复请求', async () => {
+    const { controller, requests } = setup({ local: null });
+    controller.enable();
+    controller.setMode('only');
+    await flush();
+    controller.handleResult(requests[0]!.items[0]!.id, '你好世界');
+    expect(byId('p1').firstChild!.textContent).toBe('你好世界');
+    await vi.advanceTimersByTimeAsync(MUTATION_DEBOUNCE_MS + CONTENT_FLUSH_MS);
+    expect(requests).toHaveLength(1);
+  });
+
   it('动态新增的段落会被翻译', async () => {
     const { controller } = setup();
     controller.enable();

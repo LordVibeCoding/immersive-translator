@@ -2,7 +2,7 @@
   "name": "immersive-translator",
   "description": "又快又准的英文网页双语翻译 Chrome 插件：本地模型秒出初稿，大模型流式精翻",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "type": "module",
   "scripts": {

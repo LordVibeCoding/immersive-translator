@@ -72,8 +72,34 @@ test('开关翻译、切换只看译文', async ({ context, sw, server }) => {
 
   await sendCommand(sw, server.url, 'toggle-mode');
   await expect(page.locator('html')).toHaveClass(/it-only/);
-  await expect(page.locator('#p2 > a')).toBeHidden();
-  await expect(page.locator('#p2 > it-tr')).toBeVisible();
+  await expect(page.locator('#p2')).toHaveText('译:Hello world, this is a test.', { useInnerText: true });
+  await expect(page.locator('#p2 > it-tr')).toBeHidden();
+});
+
+test('只看译文：原地替换文字，不破坏表单控件与布局，切回后恢复原文', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await expect(page.locator('#dns it-tr')).toHaveCount(2);
+  await sendCommand(sw, server.url, 'toggle');
+  const before = await page.locator('#edit').boundingBox();
+  await sendCommand(sw, server.url, 'toggle');
+
+  await sendCommand(sw, server.url, 'toggle-mode');
+  await expect(page.locator('html')).toHaveClass(/it-only/);
+  await expect(page.locator('#type-cell .lbl')).toHaveText('译:Type');
+  await expect(page.locator('#sel')).toBeVisible();
+  await expect(page.locator('#host')).toBeVisible();
+  await expect(page.locator('#host')).toHaveValue('@');
+  await expect(page.locator('#edit')).toContainText('译:');
+  await expect(page.locator('#dns it-tr').first()).toBeHidden();
+  const after = await page.locator('#edit').boundingBox();
+  // 中文字体行高略大（约 +3px）属正常；旧实现插入整行译文块会让按钮高度接近翻倍
+  expect(after!.height).toBeLessThan(before!.height * 1.3);
+
+  await sendCommand(sw, server.url, 'toggle-mode');
+  await expect(page.locator('#type-cell .lbl')).toHaveText('Type');
+  await expect(page.locator('#edit')).toHaveText('✎ Edit译:✎ Edit');
 });
 
 test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ context, sw, server }) => {
@@ -133,7 +159,7 @@ test('清单包含右键菜单权限与插件图标', async ({ context, sw }) =>
   expect(manifest.icons?.['128']).toBeTruthy();
 });
 
-test('只看译文：混合块的子段落保持可见并在滚动到后被翻译', async ({ context, sw, server }) => {
+test('只看译文：混合块的子段落保持可见并在滚动到后被原地翻译', async ({ context, sw, server }) => {
   await configure(sw, server);
   const page = await context.newPage();
   await page.goto(server.url);
@@ -142,13 +168,12 @@ test('只看译文：混合块的子段落保持可见并在滚动到后被翻�
 
   await sendCommand(sw, server.url, 'toggle-mode');
   await expect(page.locator('html')).toHaveClass(/it-only/);
-  await expect(page.locator('#mix')).toHaveCSS('font-size', '0px');
-  await expect(page.locator('#mix > it-tr')).toBeVisible();
+  await expect(page.locator('#mix')).toContainText('译:Lead text', { useInnerText: true });
   await expect(page.locator('#mixp')).toBeVisible();
 
   await page.locator('#mixp').scrollIntoViewIfNeeded();
-  await expect(page.locator('#mixp > it-tr')).toHaveText('译:Child paragraph text.');
-  await expect(page.locator('#mixp > it-tr')).toHaveCSS('font-size', '16px');
+  await expect(page.locator('#mixp')).toHaveText('译:Child paragraph text.', { useInnerText: true });
+  await expect(page.locator('#mixp')).toHaveCSS('font-size', '16px');
 });
 
 test('动态插入的段落也会被翻译', async ({ context, sw, server }) => {

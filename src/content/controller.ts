@@ -2,7 +2,16 @@ import { CONTENT_FLUSH_MS, MUTATION_DEBOUNCE_MS, TR_TAG } from '../shared/consta
 import type { TranslateItem, TranslateRequest } from '../shared/messages';
 import type { DisplayMode } from '../shared/settings';
 import type { TextTranslator } from './local-engine';
-import { applyMode, clearTranslation, injectStyles, isRendered, renderTranslation, type Level } from './renderer';
+import {
+  applyMode,
+  clearTranslation,
+  injectStyles,
+  isRendered,
+  renderTranslation,
+  showInPlace,
+  showOriginal,
+  type Level,
+} from './renderer';
 import { findBlocks, readUnit, type Unit } from './scanner';
 import { shouldTranslate } from './text-filter';
 
@@ -37,6 +46,8 @@ export class Controller {
   private readonly blockIds = new WeakMap<Element, string>();
   private readonly pending = new Set<Element>();
   private readonly mutationRoots = new Set<Element>();
+  /** 渲染过译文的段落：切换模式/开关时统一原地替换或换回原文 */
+  private readonly rendered = new Set<Element>();
   private flushTimer: ReturnType<typeof setTimeout> | undefined;
   private mutationTimer: ReturnType<typeof setTimeout> | undefined;
   private visibility: VisibilityObserver | null = null;
@@ -57,6 +68,7 @@ export class Controller {
     this.enabled = true;
     injectStyles(doc);
     applyMode(doc, true, this.mode);
+    this.syncInPlace();
     this.visibility = this.deps.createVisibilityObserver((els) => this.onVisible(els));
     this.mutations = new MutationObserver((records) => this.onMutations(records));
     this.mutations.observe(doc.body, { childList: true, subtree: true, characterData: true });
@@ -67,6 +79,7 @@ export class Controller {
     if (!this.enabled) return;
     this.enabled = false;
     applyMode(this.deps.doc, false, this.mode);
+    this.syncInPlace();
     this.visibility?.disconnect();
     this.mutations?.disconnect();
     this.visibility = null;
@@ -87,6 +100,7 @@ export class Controller {
   setMode(mode: DisplayMode): void {
     this.mode = mode;
     applyMode(this.deps.doc, this.enabled, mode);
+    this.syncInPlace();
   }
 
   /** 本地引擎就绪较晚时注入（如等到页面上第一次手势才创建）；已登记但还没有终稿的段落顺带补上本地翻译 */
@@ -144,6 +158,19 @@ export class Controller {
     for (const [id, unit] of this.units) {
       if (!unit.block.isConnected) this.abandon(id);
     }
+    for (const block of this.rendered) {
+      if (!block.isConnected) this.rendered.delete(block);
+    }
+  }
+
+  /** 只看译文（且已开启）时把已渲染段落原地替换为译文，否则换回原文 */
+  private syncInPlace(): void {
+    const inPlace = this.enabled && this.mode === 'only';
+    for (const block of this.rendered) {
+      if (!block.isConnected) this.rendered.delete(block);
+      else if (inPlace) showInPlace(block);
+      else showOriginal(block);
+    }
   }
 
   /** 释放一个永远不会到达 final 的任务条目 */
@@ -173,6 +200,7 @@ export class Controller {
     const unit = this.units.get(id);
     if (!unit || this.sources.get(unit.block) !== unit.text) return;
     renderTranslation(unit, text, level);
+    this.rendered.add(unit.block);
     if (level === 'final') {
       this.units.delete(id);
       this.inFlight.delete(unit.block);

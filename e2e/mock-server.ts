@@ -11,12 +11,19 @@ export interface MockServer {
  * #p1 上的网站样式模拟 `.x > * { display:block }` 之类规则，用于验证关闭翻译时译文仍被隐藏；
  * #mix 是混合块（裸文本 + 子段落），子段落被高占位推到视口（含提前量）之外，
  * 用于验证只看译文模式下子段落不被隐藏、滚动到后仍会被翻译。
+ * #dns 模拟网页应用里的表格：标签 + 包在 span 里的下拉框/输入框 + 带图标的按钮，表单控件继承字体，
+ * 用于验证只看译文模式不破坏表单控件和布局。
  */
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Test Page</title>
-<style>#p1 > * { display: block; }</style></head><body>
+<style>#p1 > * { display: block; } input, select, button { font: inherit; }</style></head><body>
 <p id="p1">The quick brown fox jumps over the lazy dog.</p>
 <p id="p2">Hello <a href="#">world</a>, this is a <b>test</b>.</p>
 <pre id="code">const x = 1;</pre>
+<table id="dns"><tr>
+<td id="type-cell"><label class="lbl">Type</label> <span class="wrap"><select id="sel"><option>A Record</option></select></span></td>
+<td><span class="wrap"><input id="host" value="@"></span></td>
+<td><button id="edit"><i class="icon">✎</i> Edit</button></td>
+</tr></table>
 <div id="mix">Lead text <div style="height: 3000px"></div><p id="mixp">Child paragraph text.</p></div>
 </body></html>`;
 
