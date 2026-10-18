@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { findBlocks, readUnit } from '@/src/content/scanner';
 
 const byId = (id: string) => document.getElementById(id)!;
@@ -102,6 +102,26 @@ describe('scanner', () => {
     it('display:inline 的 div 并进所在段落', () => {
       document.body.innerHTML = '<div id="p">Hello <div style="display:inline">dear</div> friend</div>';
       expect(readUnit(byId('p'))?.text).toBe('Hello dear friend');
+    });
+  });
+
+  describe('不要翻译的标记', () => {
+    afterEach(() => {
+      document.documentElement.removeAttribute('translate');
+      document.body.classList.remove('notranslate');
+    });
+
+    it('忽略加在 <html>/<body> 上的整页标记（React 网站用来防止浏览器整页翻译）', () => {
+      document.documentElement.setAttribute('translate', 'no');
+      document.body.classList.add('notranslate');
+      document.body.innerHTML = '<p id="p">Make Offer</p>';
+      expect(ids(findBlocks(document.body))).toEqual(['p']);
+    });
+
+    it('网页内部元素上的标记仍然尊重', () => {
+      document.documentElement.setAttribute('translate', 'no');
+      document.body.innerHTML = '<p id="p">Real text</p><div translate="no">Brand Name</div><span class="notranslate">Keep me</span>';
+      expect(ids(findBlocks(document.body))).toEqual(['p']);
     });
   });
 });

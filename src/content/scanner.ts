@@ -17,8 +17,22 @@ const INLINE_TAGS: ReadonlySet<string> = new Set([
 /** 行内 <code> 属于段落正文，不跳过；代码块由 'pre' 跳过（含 pre > code） */
 const SKIP_SELECTOR = [
   'pre', 'script', 'style', 'noscript', 'textarea', 'input', 'select', 'svg', 'math',
-  '[contenteditable=""]', '[contenteditable="true"]', '[translate="no"]', '.notranslate', TR_TAG,
+  '[contenteditable=""]', '[contenteditable="true"]', TR_TAG,
 ].join(',');
+
+/** 网站标记的「不要翻译」区域 */
+const NO_TRANSLATE_SELECTOR = '[translate="no"], .notranslate';
+
+/**
+ * 是否位于网站标记的不翻译区域。加在 <html>/<body> 上的整页标记忽略：React/Next.js 网站常用它
+ * 防止浏览器整页翻译改动 DOM 导致崩溃，并非内容不可翻译；本插件不删改网站元素，不受此影响。
+ * 网页内部元素上的标记（品牌名、代码片段等）仍然尊重。
+ */
+function isOptedOut(el: Element): boolean {
+  const hit = el.closest(NO_TRANSLATE_SELECTOR);
+  const doc = el.ownerDocument;
+  return hit !== null && hit !== doc.documentElement && hit !== doc.body;
+}
 
 /** 语义上属于正文的行内标签：网站常把它们设成 inline-block 做成小方块，仍应并进段落 */
 const TEXT_LEVEL_TAGS: ReadonlySet<string> = new Set([
@@ -49,7 +63,7 @@ export function nearestBlock(el: Element): Element {
 
 function isCandidateText(node: Node): boolean {
   const parent = node.parentElement;
-  return Boolean(parent && node.textContent?.trim() && !parent.closest(SKIP_SELECTOR));
+  return Boolean(parent && node.textContent?.trim() && !parent.closest(SKIP_SELECTOR) && !isOptedOut(parent));
 }
 
 function candidateTextNodes(root: Element): Text[] {

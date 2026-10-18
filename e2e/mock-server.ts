@@ -62,7 +62,8 @@ export async function startMockServer(): Promise<MockServer> {
       return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(PAGE);
+    // ?notranslate：模拟 React/Next.js 网站在 <html> 上加 translate="no"
+    res.end(req.url?.includes('notranslate') ? PAGE.replace('<html lang="en">', '<html lang="en" translate="no">') : PAGE);
   });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;

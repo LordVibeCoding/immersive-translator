@@ -11,6 +11,12 @@ export const MAX_CJK_RATIO = 0.3;
 /** 无 lang 属性时，拉丁字母占比达到该值视为英文页面 */
 export const ENGLISH_PAGE_MIN_LATIN_RATIO = 0.5;
 export const PAGE_SAMPLE_CHARS = 2000;
+/** 等待页面 load 事件的上限（ms）：脆弱页面推迟翻译、悬浮球推迟挂载时使用 */
+export const PAGE_LOAD_MAX_WAIT_MS = 5000;
+/** 页面加载完后等待浏览器空闲的上限（ms） */
+export const PAGE_IDLE_TIMEOUT_MS = 2000;
+/** 判断 Next.js 时最多检查的内联脚本数 */
+export const NEXT_SCRIPT_SCAN_LIMIT = 50;
 
 /** 内容脚本调度 */
 export const VIEWPORT_ROOT_MARGIN = '100% 0px';

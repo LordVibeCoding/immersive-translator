@@ -130,6 +130,15 @@ test('双语：横排菜单项的译文跟在原文后面不被挤成竖排，�
   await expect(page.locator('#kit-free')).toHaveText('FREE');
 });
 
+test('<html translate="no"> 的网站（React/Next.js 常见）也能翻译，悬浮球照常出现', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(`${server.url}/?notranslate`);
+  await expect(page.locator('html')).toHaveAttribute('translate', 'no');
+  await expect(page.locator('#p1 > it-tr')).toHaveText(P1);
+  await expect(page.locator('it-ball .ball')).toBeVisible();
+});
+
 test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ context, sw, server }) => {
   await configure(sw, server);
   const pageA = await context.newPage();

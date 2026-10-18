@@ -40,11 +40,23 @@ export async function localAvailability(scope: object = globalThis): Promise<Loc
 
 const GESTURE_EVENTS = ['pointerdown', 'keydown'] as const;
 
-function createAndReport(api: TranslatorApi, onReady: (translator: TextTranslator) => void): Promise<void> {
-  return api.create(LANGS).then(onReady, (err: unknown) => {
-    console.warn('[沉浸翻译] 创建本地翻译器失败', err);
-  });
+/** 创建并回调；返回是否成功 */
+function createAndReport(api: TranslatorApi, onReady: (translator: TextTranslator) => void): Promise<boolean> {
+  return api.create(LANGS).then(
+    (translator) => {
+      onReady(translator);
+      return true;
+    },
+    (err: unknown) => {
+      console.warn('[沉浸翻译] 创建本地翻译器失败', err);
+      return false;
+    },
+  );
 }
+
+/** 当前是否处于用户激活状态（单独按修饰键、Esc 等不产生激活）；拿不到时视为已激活 */
+const defaultIsActivated = () =>
+  (globalThis.navigator as { userActivation?: { isActive: boolean } } | undefined)?.userActivation?.isActive ?? true;
 
 /**
  * 创建本地翻译器，就绪后回调 onReady。
@@ -59,17 +71,27 @@ export async function createLocalEngineOnGesture(
   onReady: (translator: TextTranslator) => void,
   scope: object = globalThis,
   target: EventTarget = globalThis,
+  isActivated: () => boolean = defaultIsActivated,
 ): Promise<void> {
   const status = await localAvailability(scope);
   const api = getApi(scope);
   if (!api) return;
-  if (status === 'available') return createAndReport(api, onReady);
+  if (status === 'available') {
+    await createAndReport(api, onReady);
+    return;
+  }
   if (status !== 'downloadable' && status !== 'downloading') return;
+  // 只有真正产生用户激活的操作才尝试创建；失败（如被浏览器拒绝）则继续等下一次操作
   const onGesture = () => {
-    GESTURE_EVENTS.forEach((type) => target.removeEventListener(type, onGesture, true));
-    void createAndReport(api, onReady);
+    if (!isActivated()) return;
+    stop();
+    void createAndReport(api, onReady).then((ok) => {
+      if (!ok) listen();
+    });
   };
-  GESTURE_EVENTS.forEach((type) => target.addEventListener(type, onGesture, true));
+  const listen = () => GESTURE_EVENTS.forEach((type) => target.addEventListener(type, onGesture, true));
+  const stop = () => GESTURE_EVENTS.forEach((type) => target.removeEventListener(type, onGesture, true));
+  listen();
 }
 
 export async function downloadLocalModel(

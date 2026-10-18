@@ -78,6 +78,37 @@ describe('createLocalEngineOnGesture', () => {
     expect(scope.Translator.create).toHaveBeenCalledTimes(1);
   });
 
+  it('不产生用户激活的事件（单独按 Option/Esc 等）不消耗监听，等下一次有效操作', async () => {
+    const target = new EventTarget();
+    const scope = fakeScope('downloadable');
+    const onReady = vi.fn();
+    let activated = false;
+    await createLocalEngineOnGesture(onReady, scope, target, () => activated);
+    target.dispatchEvent(new Event('keydown'));
+    await settle();
+    expect(scope.Translator.create).not.toHaveBeenCalled();
+
+    activated = true;
+    target.dispatchEvent(new Event('pointerdown'));
+    await settle();
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('创建失败时继续等待下一次操作', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const target = new EventTarget();
+    const scope = fakeScope('downloadable');
+    scope.Translator.create.mockRejectedValueOnce(new Error('NotAllowedError'));
+    const onReady = vi.fn();
+    await createLocalEngineOnGesture(onReady, scope, target);
+    target.dispatchEvent(new Event('pointerdown'));
+    await settle();
+    expect(onReady).not.toHaveBeenCalled();
+    target.dispatchEvent(new Event('pointerdown'));
+    await settle();
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
   it('downloading 时按键也能触发创建', async () => {
     const target = new EventTarget();
     const onReady = vi.fn();

@@ -12,7 +12,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![WXT](https://img.shields.io/badge/built%20with-WXT-67D55E)](https://wxt.dev/)
-[![Tests](https://img.shields.io/badge/tests-141%20unit%20%7C%2012%20e2e-brightgreen)](#-开发)
+[![Tests](https://img.shields.io/badge/tests-151%20unit%20%7C%2013%20e2e-brightgreen)](#-开发)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#-开发)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -179,6 +179,15 @@ pnpm build        # 产物在 .output/chrome-mv3
 </details>
 
 <details>
+<summary><b>React / Next.js 网站（如 OpenSea）翻译慢一点？</b></summary>
+
+<br/>
+
+这类网站先由服务端输出页面、再由 React 接管。为避免在接管前改动页面导致网站报错，插件会等页面加载完成、浏览器空闲后再开始翻译（通常 1～2 秒），悬浮球也会稍晚出现。普通网站不受影响，打开即翻译。
+
+</details>
+
+<details>
 <summary><b>为什么只支持 Chrome？</b></summary>
 
 <br/>
@@ -261,7 +270,7 @@ pnpm test:e2e                         # 端到端测试（使用模拟大模型�
 - [x] 视口优先、流式回填、IndexedDB 缓存
 - [x] 原文 / 双语 / 只看译文 三种模式与快捷键
 - [x] 动态内容（无限滚动）支持
-- [ ] 本地翻译启用手势更健壮（忽略不产生用户激活的按键）
+- [x] 本地翻译启用手势更健壮（忽略不产生用户激活的按键）
 - [ ] 大模型超时改为「空闲超时」，适配慢速模型
 - [ ] 保留行内元素之间的空格
 - [ ] 缓存版本号与「清空缓存」按钮
