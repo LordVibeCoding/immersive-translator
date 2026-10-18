@@ -115,4 +115,13 @@ describe('renderer', () => {
     showInPlace(byId('q'));
     expect(byId('q').textContent).toBe('Other text');
   });
+
+  it('段落是弹性/网格布局时，译文以行内方式跟在原文后面（不被挤成竖排）', () => {
+    document.body.innerHTML =
+      '<a id="row" style="display:flex">Business Starter Kit</a><p id="p">Hello world</p>';
+    renderTranslation(readUnit(byId('row'))!, '商业入门套件', 'final');
+    renderTranslation(readUnit(byId('p'))!, '你好世界', 'final');
+    expect(trOf(byId('row'))!.classList.contains('it-inline')).toBe(true);
+    expect(trOf(byId('p'))!.classList.contains('it-inline')).toBe(false);
+  });
 });

@@ -4,6 +4,8 @@ export const TARGET_LANG = 'zh';
 
 /** 段落过滤 */
 export const MIN_TEXT_LENGTH = 3;
+/** 不超过该词数且没有小写字母的文字视为徽章/缩写（NEW、FREE、US ONLY、TTL），不翻译 */
+export const MAX_BADGE_WORDS = 3;
 /** 中日韩字符数 / (中日韩字符数 + 英文单词数) 超过该值视为已是中文 */
 export const MAX_CJK_RATIO = 0.3;
 /** 无 lang 属性时，拉丁字母占比达到该值视为英文页面 */

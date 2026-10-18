@@ -13,6 +13,8 @@ const swaps = new WeakMap<Element, readonly SwapRecord[]>();
 
 /**
  * 关闭：隐藏全部译文；双语：译文显示在原文下方（显示/隐藏用 !important，防止网站 `.x > *` 之类规则干扰）；
+ * 段落本身是弹性/网格布局（如横排菜单项）时，块级译文会变成被挤压的格子（逐字竖排），
+ * 改为 it-inline：不换行地跟在原文后面。
  * 只看译文：译文块隐藏，译文由 showInPlace 原地写进原文的文字节点——只改文字不动元素，
  * 表单控件、图标、按钮和表格布局都保持原样。
  */
@@ -20,6 +22,7 @@ const STYLES = `
 html:not(.it-on) ${TR_TAG} { display: none !important; }
 html.it-on ${TR_TAG} { display: block !important; white-space: normal; margin-top: .25em; }
 html.it-on ${TR_TAG}.it-draft { opacity: .6; }
+html.it-on ${TR_TAG}.it-inline { display: inline-block !important; margin: 0 0 0 .35em; white-space: nowrap; flex-shrink: 0; }
 html.it-on.it-only ${TR_TAG} { display: none !important; }
 `;
 
@@ -74,6 +77,7 @@ export function clearTranslation(block: Element): void {
 function createTr(unit: Unit): Element {
   const { block, anchor } = unit;
   const tr = block.ownerDocument.createElement(TR_TAG);
+  if (/flex|grid/.test(getComputedStyle(block).display)) tr.classList.add('it-inline');
   if (anchor.parentNode === block) block.insertBefore(tr, anchor.nextSibling);
   else block.append(tr);
   return tr;

@@ -15,6 +15,7 @@ export interface MockServer {
  * 用于验证只看译文模式不破坏表单控件和布局。
  * #nav 模拟网站导航：菜单项带绝对定位的 New 徽章，下拉菜单项是 display:block 的 <a>，
  * 用于验证它们各自成段翻译，不会被拼成一整段。
+ * #kit 模拟横排（flex）菜单项 + 徽章，用于验证双语译文不被挤成竖排、徽章不翻译。
  */
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Test Page</title>
 <style>#p1 > * { display: block; } input, select, button { font: inherit; }</style></head><body>
@@ -22,6 +23,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <a id="nav-sec" href="#">Security <span id="badge" style="position:absolute;top:-8px;font-size:10px">New</span></a>
 <div id="dd"><a id="dd1" href="#" style="display:block">SSL Certificates</a><a id="dd2" href="#" style="display:block">Domain Privacy</a></div>
 </li></ul></nav>
+<a id="kit" href="#" style="display:flex;align-items:center;width:420px">Business Starter Kit<span id="kit-new" style="display:inline-block;text-transform:uppercase">New</span><span id="kit-free" style="display:inline-block">FREE</span></a>
 <p id="p1">The quick brown fox jumps over the lazy dog.</p>
 <p id="p2">Hello <a href="#">world</a>, this is a <b>test</b>.</p>
 <pre id="code">const x = 1;</pre>

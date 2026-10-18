@@ -1,4 +1,4 @@
-import { ENGLISH_PAGE_MIN_LATIN_RATIO, MAX_CJK_RATIO, MIN_TEXT_LENGTH } from '../shared/constants';
+import { ENGLISH_PAGE_MIN_LATIN_RATIO, MAX_BADGE_WORDS, MAX_CJK_RATIO, MIN_TEXT_LENGTH } from '../shared/constants';
 
 const LATIN_LETTER = /[A-Za-z]/g;
 const LATIN_WORD = /[A-Za-z]+/g;
@@ -19,8 +19,14 @@ export function shouldTranslate(raw: string): boolean {
   if (text.length < MIN_TEXT_LENGTH || URL_ONLY.test(text)) return false;
   const words = count(text, LATIN_WORD);
   if (words === 0) return false;
+  if (words <= MAX_BADGE_WORDS && !/[a-z]/.test(text)) return false; // 全大写短标签：徽章、缩写
   const cjk = count(text, CJK_CHAR);
   return cjk / (cjk + words) <= MAX_CJK_RATIO;
+}
+
+/** 被样式设成全大写显示（text-transform: uppercase）的短文字，视为徽章/标签，不翻译 */
+export function isUppercaseLabel(text: string, textTransform: string): boolean {
+  return textTransform === 'uppercase' && count(text, LATIN_WORD) <= MAX_BADGE_WORDS;
 }
 
 /** 判断页面是否为英文：优先看 <html lang>，没有则按正文抽样的字母占比 */

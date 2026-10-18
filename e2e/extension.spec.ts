@@ -116,6 +116,20 @@ test('导航菜单：徽章与块级菜单项各自成段翻译，只看译文�
   await expect(page.locator('#dd2')).toHaveText('译:Domain Privacy', { useInnerText: true });
 });
 
+test('双语：横排菜单项的译文跟在原文后面不被挤成竖排，徽章不翻译', async ({ context, sw, server }) => {
+  await configure(sw, server);
+  const page = await context.newPage();
+  await page.goto(server.url);
+  const tr = page.locator('#kit > it-tr');
+  await expect(tr).toHaveText('译:Business Starter Kit');
+  await expect(tr).toHaveClass(/it-inline/);
+  const box = await tr.boundingBox();
+  const lineHeight = await page.locator('#kit').evaluate((el) => parseFloat(getComputedStyle(el).fontSize) * 1.6);
+  expect(box!.height).toBeLessThan(lineHeight);
+  await expect(page.locator('#kit-new it-tr, #kit-free it-tr')).toHaveCount(0);
+  await expect(page.locator('#kit-free')).toHaveText('FREE');
+});
+
 test('多个标签页互不影响：在 B 页操作不改变 A 页', async ({ context, sw, server }) => {
   await configure(sw, server);
   const pageA = await context.newPage();

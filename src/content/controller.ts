@@ -13,7 +13,7 @@ import {
   type Level,
 } from './renderer';
 import { findBlocks, readUnit, type Unit } from './scanner';
-import { shouldTranslate } from './text-filter';
+import { isUppercaseLabel, shouldTranslate } from './text-filter';
 
 export interface VisibilityObserver {
   observe(el: Element): void;
@@ -140,6 +140,7 @@ export class Controller {
   private prepare(block: Element): TranslateItem | null {
     const unit = readUnit(block);
     if (!unit || !shouldTranslate(unit.text)) return null;
+    if (isUppercaseLabel(unit.text, getComputedStyle(block).textTransform)) return null;
     const unchanged = this.sources.get(block) === unit.text;
     if (unchanged && (isRendered(block) || this.inFlight.has(block))) return null;
     clearTranslation(block);

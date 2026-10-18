@@ -122,6 +122,14 @@ describe('Controller', () => {
     expect(requests).toHaveLength(1);
   });
 
+  it('被样式设成全大写显示的短标签不翻译', async () => {
+    document.body.innerHTML = '<p id="p1">Hello world</p><span id="badge" style="display:block;text-transform:uppercase">New</span>';
+    const { controller, requests } = setup();
+    controller.enable();
+    await flush();
+    expect(requests[0]!.items.map((i) => i.text)).toEqual(['Hello world']);
+  });
+
   it('动态新增的段落会被翻译', async () => {
     const { controller } = setup();
     controller.enable();
