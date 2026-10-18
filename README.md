@@ -212,7 +212,7 @@ pnpm install                          # 安装依赖
 pnpm dev                              # 开发模式，监听文件变更自动重新构建
 pnpm build                            # 生产构建 → .output/chrome-mv3
 pnpm zip                              # 打包成 zip，用于发布
-pnpm local                            # 构建并同步到固定目录 ~/Chrome插件/沉浸翻译（可传自定义目录）
+pnpm local                            # 构建并同步到固定目录（默认 ~/Chrome插件/沉浸翻译，可传参数或写入 .install-dir）
 pnpm compile                          # TypeScript 类型检查
 pnpm test                             # 单元与集成测试
 pnpm test:coverage                    # 测试覆盖率
